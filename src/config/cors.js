@@ -12,9 +12,7 @@ const configCORS = (app) => {
     // Request tiêu đề bạn muốn cho phép
     res.setHeader(
       "Access-Control-Allow-Headers",
-      "X-Requested-With,content-type, Authorization",
-      "UserID",
-      "UserName"
+      "X-Requested-With, Content-Type, Authorization, UserID, UserName"
     );
     res.setHeader("Access-Control-Allow-Credentials", true);
 

@@ -90,7 +90,7 @@ const handleLogin = async (rawData) => {
 
     if (!user) {
       return {
-        EM: "Email or phone not found",
+        EM: "Email hoặc số điện thoại không tồn tại",
         EC: 1,
         DT: "",
       };
@@ -99,7 +99,7 @@ const handleLogin = async (rawData) => {
     const isPasswordCorrect = checkPassword(rawData.password, user.password);
     if (!isPasswordCorrect) {
       return {
-        EM: "Incorrect password",
+        EM: "Mật khẩu hoặc tài khoản không đúng",
         EC: 1,
         DT: "",
       };

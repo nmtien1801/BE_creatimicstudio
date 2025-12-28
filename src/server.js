@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 
 // Routers
 import authApi from "./router/authApi";
+import ApiStaff from "./router/staffApi";
 // const corsMiddleware = require("./config/cors");
 
 const app = express();
@@ -17,6 +18,7 @@ app.use(cookieParser());
 // connectDB();
 
 authApi(app);
+ApiStaff(app);
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
