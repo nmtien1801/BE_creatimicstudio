@@ -1,11 +1,23 @@
 import authService from "../service/authService.js";
-import { createToken, verifyRefreshToken, verifyToken } from "../middleware/jwtAction";
+import {
+  createToken,
+  verifyRefreshToken,
+  verifyToken,
+} from "../middleware/jwtAction";
 import dotenv from "dotenv";
 dotenv.config();
 
 const handleLogin = async (req, res) => {
   try {
     let data = await authService.handleLogin(req.body);
+
+    if (data.EC !== 0) {
+      return res.status(200).json({
+        EM: data.EM,
+        EC: data.EC,
+        DT: data.DT,
+      });
+    }
 
     const { accessToken, refreshToken } = createToken(data.DT);
 
@@ -29,12 +41,12 @@ const handleLogin = async (req, res) => {
   } catch (error) {
     console.error("Error in handleLogin:", error);
     return res.status(500).json({
-      EM: "Error from server",
+      EM: "Error from server login",
       EC: -1,
       DT: "",
     });
   }
-}
+};
 
 const handleRegister = async (req, res) => {
   try {
@@ -52,7 +64,7 @@ const handleRegister = async (req, res) => {
       DT: "",
     });
   }
-}
+};
 
 const handleRefreshToken = async (req, res) => {
   const refreshToken = req.cookies?.refreshToken;
@@ -98,7 +110,6 @@ const handleRefreshToken = async (req, res) => {
 
 const fetchAccount = async (req, res) => {
   try {
-
     let decoded = verifyToken(req.cookies.fr);
 
     return res.status(200).json({
@@ -114,8 +125,7 @@ const fetchAccount = async (req, res) => {
       DT: "",
     });
   }
-}
-
+};
 
 module.exports = {
   handleLogin,
