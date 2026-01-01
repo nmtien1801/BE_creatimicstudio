@@ -127,9 +127,36 @@ const fetchAccount = async (req, res) => {
   }
 };
 
+const changePassword = async (req, res) => {
+  try {
+    let userID = req.headers["userid"];
+
+    const data = await authService.changePassword(userID, req.body);
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error(">>> Error changePassword:", error);
+    return res.status(500).json({ EM: "Error from server", EC: -1, DT: "" });
+  }
+};
+
+const updateProfile = async (req, res) => {
+  try {
+    let userID = req.headers["userid"];
+
+    const data = await authService.updateProfile(userID, req.body);
+    
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error(">>> Error updateProfile:", error);
+    return res.status(500).json({ EM: "Error from server", EC: -1, DT: "" });
+  }
+};
+
 module.exports = {
   handleLogin,
   handleRegister,
   handleRefreshToken,
   fetchAccount,
+  changePassword,
+  updateProfile,
 };

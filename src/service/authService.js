@@ -1,7 +1,8 @@
 import db from "../models/index.js";
 import bcrypt from "bcryptjs";
-import { Op } from "sequelize"
+import { Op } from "sequelize";
 import dotenv from "dotenv";
+import { add } from "lodash";
 dotenv.config();
 
 // ====================== Helper ======================
@@ -128,8 +129,53 @@ const handleLogin = async (rawData) => {
   }
 };
 
+const changePassword = async (userID, rawData) => {
+  try {
+    let user = await db.User.findOne({ where: { id: userID } });
+    if (!user) {
+      return { EM: "Không tìm thấy người dùng", EC: 1, DT: "" };
+    }
+
+    const isPasswordCorrect = checkPassword(rawData.PassWordOld, user.password);
+    if (!isPasswordCorrect) {
+      return { EM: "Mật khẩu cũ không chính xác", EC: 1, DT: "" };
+    }
+
+    const hashedNewPassword = hashPassword(rawData.PassWordNew);
+    await user.update({ password: hashedNewPassword });
+
+    return { EM: "Đổi mật khẩu thành công", EC: 0, DT: "" };
+  } catch (error) {
+    console.error(">>> Lỗi đổi mật khẩu:", error);
+    return { EM: "Error from service (changePassword)", EC: -1, DT: "" };
+  }
+};
+
+const updateProfile = async (userID, rawData) => {
+  try {
+    let user = await db.User.findOne({ where: { id: userID } });
+    if (!user) {
+      return { EM: "Không tìm thấy người dùng", EC: 1, DT: "" };
+    }
+
+    await user.update({
+      userName: rawData.userName,
+      phone: rawData.phone,
+      email: rawData.email,
+      address: rawData.address,
+    });
+
+    return { EM: "Cập nhật hồ sơ thành công", EC: 0, DT: user };
+  } catch (error) {
+    console.error(">>> Lỗi cập nhật hồ sơ:", error);
+    return { EM: "Error from service (updateProfile)", EC: -1, DT: "" };
+  }
+};
+
 // ====================== EXPORT ======================
 export default {
   handleRegister,
   handleLogin,
+  changePassword,
+  updateProfile
 };
