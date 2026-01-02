@@ -38,3 +38,15 @@ module.exports = (sequelize, DataTypes) => {
   );
   return Category;
 };
+
+
+// const categories = await Category.findAll({
+//   where: { parentId: null }, // Lấy các danh mục gốc
+//   include: [
+//     {
+//       model: Category,
+//       as: "children",
+//       include: ["children"], // Đệ quy nếu muốn lấy thêm cấp cháu
+//     },
+//   ],
+// });
