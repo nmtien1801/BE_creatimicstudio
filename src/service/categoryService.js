@@ -7,35 +7,37 @@ const getListCategory = async (query = {}) => {
     const limit = parseInt(query.limit) || 10;
     const offset = (page - 1) * limit;
 
-    const where = {};
-    if (query.name) where.name = { [Op.like]: `%${query.name}%` };
+    // 1. Cố định điều kiện: Chỉ lấy danh mục Gốc (Cha)
+    // Không cần check query.name nữa
+    const where = { parentId: null };
 
-    const categories = await db.Category.findAll({
-      where,
-      limit,
-      offset,
-      order: [["createdAt", "DESC"]],
+    // 2. Query
+    const { count, rows } = await db.Category.findAndCountAll({
+      where: where, // Chỉ lấy cha
+      limit: limit, // Giới hạn số lượng cha
+      offset: offset,
+      order: [["createdAt", "DESC"]], // Cha mới nhất lên đầu
       include: [
         {
           model: db.Category,
-          as: "parent",
-          attributes: ["id", "name"]
+          as: "children", // Lấy danh sách con kèm theo
+          attributes: ["id", "name", "icon", "status", "parentId"],
+          // Nếu muốn sắp xếp con theo tên A-Z thì uncomment dòng dưới:
+          // order: [["name", "ASC"]]
         },
-        {
-          model: db.Category,
-          as: "children",
-          attributes: ["id", "name"]
-        }
-      ]
+      ],
+      distinct: true, // Bắt buộc có để đếm đúng số lượng cha khi dùng include
     });
-
-    // 🔹 Lấy tổng ALL (không limit)
-    const total = await db.Category.count({ where });
 
     return {
       EM: "Get category list success",
       EC: 0,
-      DT: { categories, total, page, limit },
+      DT: {
+        categories: rows,
+        total: count,
+        page,
+        limit,
+      },
     };
   } catch (error) {
     console.error(">>> Error getListCategory:", error);
@@ -50,14 +52,14 @@ const getCategoryById = async (id) => {
         {
           model: db.Category,
           as: "parent",
-          attributes: ["id", "name"]
+          attributes: ["id", "name"],
         },
         {
           model: db.Category,
           as: "children",
-          attributes: ["id", "name", "icon", "status"]
-        }
-      ]
+          attributes: ["id", "name", "icon", "status"],
+        },
+      ],
     });
     if (!category) return { EM: "Category not found", EC: 1, DT: "" };
     return { EM: "Get category success", EC: 0, DT: category };
@@ -73,7 +75,7 @@ const createCategory = async (rawData) => {
       name: rawData.name || "",
       icon: rawData.icon || "",
       status: rawData.status ?? true,
-      parentId: rawData.parentId || null
+      parentId: rawData.parentId || null,
     });
 
     return { EM: "Create category success", EC: 0, DT: newCategory };
@@ -92,7 +94,7 @@ const updateCategory = async (id, rawData) => {
       name: rawData.name ?? category.name,
       icon: rawData.icon ?? category.icon,
       status: rawData.status ?? category.status,
-      parentId: rawData.parentId ?? category.parentId
+      parentId: rawData.parentId ?? category.parentId,
     };
 
     await category.update(updates);
@@ -120,5 +122,5 @@ export default {
   getCategoryById,
   createCategory,
   updateCategory,
-  deleteCategory
+  deleteCategory,
 };
