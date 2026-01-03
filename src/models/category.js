@@ -26,7 +26,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: true, // Thư mục cha cao nhất (Root) sẽ có parentId là null
         references: {
-          model: "Categories",
+          model: "Category",
           key: "id",
         },
       },

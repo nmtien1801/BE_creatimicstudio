@@ -22,7 +22,7 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: true, // Danh mục gốc sẽ có parentId = null
         references: {
-          model: "Categories", // Tham chiếu đến chính bảng này
+          model: "Category", // Tham chiếu đến chính bảng này
           key: "id",
         },
         onUpdate: "CASCADE",
