@@ -1,59 +1,35 @@
 "use strict";
 const { Model } = require("sequelize");
+
 module.exports = (sequelize, DataTypes) => {
-  class Category extends Model {
-    static associate(models) {
-      // 1. Một Category con thuộc về một Category cha (BelongsTo)
-      Category.belongsTo(models.Category, {
-        as: "parent",
-        foreignKey: "parentId",
-      });
-
-      // 2. Một Category cha có thể có nhiều Category con (HasMany)
-      Category.hasMany(models.Category, {
-        as: "children",
-        foreignKey: "parentId",
-      });
-
-      // Quan hệ Nhiều-Nhiều với Product
-      Category.belongsToMany(models.Product, {
-        through: "ProductCategory",
-        foreignKey: "categoryId",
-        otherKey: "productId",
-        as: "product",
-      });
-    }
+  class ProductCategory extends Model {
+    static associate(models) {}
   }
-  Category.init(
+  ProductCategory.init(
     {
-      name: DataTypes.STRING,
-      icon: DataTypes.STRING,
-      status: DataTypes.BOOLEAN,
-      // Thêm trường parentId để lưu ID của thư mục cha
-      parentId: {
+      productId: {
         type: DataTypes.INTEGER,
-        allowNull: true, // Thư mục cha cao nhất (Root) sẽ có parentId là null
+        primaryKey: true, // Kết hợp với categoryId tạo thành Composite Primary Key
         references: {
-          model: "Category",
+          model: "Products",
+          key: "id",
+        },
+      },
+      categoryId: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        references: {
+          model: "Categories",
           key: "id",
         },
       },
     },
     {
       sequelize,
-      modelName: "Category",
+      modelName: "ProductCategory",
+      tableName: "ProductCategory", // Đảm bảo tên bảng khớp với migration
+      timestamps: true,
     }
   );
-  return Category;
+  return ProductCategory;
 };
-
-// const categories = await Category.findAll({
-//   where: { parentId: null }, // Lấy các danh mục gốc
-//   include: [
-//     {
-//       model: Category,
-//       as: "children",
-//       include: ["children"], // Đệ quy nếu muốn lấy thêm cấp cháu
-//     },
-//   ],
-// });
