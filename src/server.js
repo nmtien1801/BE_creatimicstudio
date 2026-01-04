@@ -8,6 +8,7 @@ import authApi from "./router/authApi";
 import ApiStaff from "./router/staffApi";
 import ApiProduct from "./router/productApi";
 import ApiCategory from "./router/categoryApi";
+import ApiProductCategory from "./router/productCategoryApi";
 // const corsMiddleware = require("./config/cors");
 
 const app = express();
@@ -23,6 +24,7 @@ authApi(app);
 ApiStaff(app);
 ApiProduct(app);
 ApiCategory(app);
+ApiProductCategory(app);
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
