@@ -94,10 +94,25 @@ const deleteProduct = async (id) => {
   }
 };
 
+const getListProductDropdown = async () => {
+  try {
+    const products = await db.Product.findAll();
+    return { EM: "Get product list success", EC: 0, DT: products };
+  } catch (error) {
+    console.error(">>> Lỗi getListProductDropdown:", error);
+    return {
+      EM: "Error from service (getListProductDropdown)",
+      EC: -1,
+      DT: "",
+    };
+  }
+};
+
 export default {
   getListProduct,
   getProductById,
   createProduct,
   updateProduct,
   deleteProduct,
+  getListProductDropdown,
 };

@@ -6,7 +6,9 @@ const getListProduct = async (req, res) => {
     return res.status(200).json(data);
   } catch (error) {
     console.error(">>> Error getListProduct:", error);
-    return res.status(500).json({ EM: "Error getListProduct from server", EC: -1, DT: "" });
+    return res
+      .status(500)
+      .json({ EM: "Error getListProduct from server", EC: -1, DT: "" });
   }
 };
 
@@ -53,10 +55,23 @@ const deleteProduct = async (req, res) => {
   }
 };
 
+const getListProductDropdown = async (req, res) => {
+  try {
+    const data = await productService.getListProductDropdown();
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error(">>> Error getListProductDropdown:", error);
+    return res
+      .status(500)
+      .json({ EM: "Error getListProductDropdown from server", EC: -1, DT: "" });
+  }
+};
+
 export default {
   getListProduct,
   getProductById,
   createProduct,
   updateProduct,
   deleteProduct,
+  getListProductDropdown,
 };

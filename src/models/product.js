@@ -2,7 +2,14 @@
 const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class Product extends Model {
-    static associate(models) {}
+    static associate(models) {
+      Product.belongsToMany(models.Category, {
+        through: "ProductCategory", // Tên bảng trung gian
+        foreignKey: "productId", // Khóa ngoại trỏ đến Product
+        otherKey: "categoryId", // Khóa ngoại trỏ đến Category
+        as: "category", // Alias khi truy vấn
+      });
+    }
   }
   Product.init(
     {

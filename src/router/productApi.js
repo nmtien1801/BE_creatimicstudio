@@ -9,10 +9,11 @@ const ApiProduct = (app) => {
   router.use(checkUserJwt);
 
   router.get("/product/list", productController.getListProduct); // GET /api/product/list?page=1&limit=10
-  router.get("/product/:id", productController.getProductById);
+  router.get("/product/byProductId/:id", productController.getProductById);
   router.post("/product/create", productController.createProduct);
   router.put("/product/update/:id", productController.updateProduct);
   router.delete("/product/delete/:id", productController.deleteProduct);
+  router.get("/product/dropdown", productController.getListProductDropdown);
 
   return app.use("/api", router);
 };
