@@ -9,19 +9,24 @@ const getListCategory = async (query = {}) => {
 
     const where = { parentId: null };
 
-    // 1. Đếm riêng số lượng danh mục Gốc (Cha) - Rất nhanh và chính xác
-    const total = await db.Category.count({ where: where });
+    // 1. Đếm tổng số danh mục cha
+    const total = await db.Category.count({ where });
 
     // 2. Lấy dữ liệu chi tiết
     const rows = await db.Category.findAll({
-      where: where, // Chỉ lấy cha
-      limit: limit, // Giới hạn số lượng cha
+      where: where,
+      limit: limit,
       offset: offset,
       order: [["createdAt", "DESC"]],
       attributes: {
         include: [
+          // Subquery đếm sản phẩm cho danh mục CHA
           [
-            db.sequelize.fn("COUNT", db.sequelize.col("product.id")),
+            db.sequelize.literal(`(
+              SELECT COUNT(*)
+              FROM "ProductCategory" AS "cp"
+              WHERE "cp"."categoryId" = "Category"."id"
+            )`),
             "productCount",
           ],
         ],
@@ -29,19 +34,25 @@ const getListCategory = async (query = {}) => {
       include: [
         {
           model: db.Category,
-          as: "children",  // Lấy danh sách con kèm theo
-          attributes: ["id", "name", "icon", "status", "parentId"],
-        },
-        {
-          model: db.Product,
-          as: "product",
-          through: { attributes: [] },
-          attributes: [],
+          as: "children",
+          attributes: [
+            "id",
+            "name",
+            "icon",
+            "status",
+            "parentId",
+            // Subquery đếm sản phẩm cho danh mục CON
+            [
+              db.sequelize.literal(`(
+                SELECT COUNT(*)
+                FROM "ProductCategory" AS "cp"
+                WHERE "cp"."categoryId" = "children"."id"
+              )`),
+              "productCount",
+            ],
+          ],
         },
       ],
-      // Group theo Category.id và children.id để Sequelize có thể map dữ liệu
-      group: ["Category.id", "children.id"],
-      subQuery: false,
     });
 
     return {
@@ -49,7 +60,7 @@ const getListCategory = async (query = {}) => {
       EC: 0,
       DT: {
         categories: rows,
-        total: total,
+        total,
         page,
         limit,
       },
