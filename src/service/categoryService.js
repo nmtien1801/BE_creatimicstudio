@@ -1,5 +1,5 @@
 import db from "../models/index.js";
-import { Op } from "sequelize";
+import { Op, sequelize } from "sequelize";
 
 const getListCategory = async (query = {}) => {
   try {
@@ -8,25 +8,39 @@ const getListCategory = async (query = {}) => {
     const offset = (page - 1) * limit;
 
     // 1. Cố định điều kiện: Chỉ lấy danh mục Gốc (Cha)
-    // Không cần check query.name nữa
     const where = { parentId: null };
 
-    // 2. Query
     const { count, rows } = await db.Category.findAndCountAll({
       where: where, // Chỉ lấy cha
       limit: limit, // Giới hạn số lượng cha
       offset: offset,
-      order: [["createdAt", "DESC"]], // Cha mới nhất lên đầu
+      order: [["createdAt", "DESC"]],
+      attributes: {
+        include: [
+          // SỬA TẠI ĐÂY: Sử dụng "product.id" vì alias trong model là "product"
+          [
+            db.sequelize.fn("COUNT", db.sequelize.col("product.id")),
+            "productCount",
+          ],
+        ],
+      },
       include: [
         {
           model: db.Category,
-          as: "children", // Lấy danh sách con kèm theo
+          as: "children",  // Lấy danh sách con kèm theo
           attributes: ["id", "name", "icon", "status", "parentId"],
-          // Nếu muốn sắp xếp con theo tên A-Z thì uncomment dòng dưới:
-          // order: [["name", "ASC"]]
+        },
+        {
+          model: db.Product,
+          as: "product",
+          through: { attributes: [] },
+          attributes: [],
         },
       ],
-      distinct: true, // Bắt buộc có để đếm đúng số lượng cha khi dùng include
+      // Group theo ID của Category và các con để tránh lỗi SQL logic
+      group: ["Category.id", "children.id"],
+      subQuery: false,
+      distinct: true,
     });
 
     return {
@@ -34,7 +48,7 @@ const getListCategory = async (query = {}) => {
       EC: 0,
       DT: {
         categories: rows,
-        total: count,
+        total: Array.isArray(count) ? count.length : count,
         page,
         limit,
       },
