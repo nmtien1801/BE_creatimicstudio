@@ -7,17 +7,19 @@ const getListCategory = async (query = {}) => {
     const limit = parseInt(query.limit) || 10;
     const offset = (page - 1) * limit;
 
-    // 1. Cố định điều kiện: Chỉ lấy danh mục Gốc (Cha)
     const where = { parentId: null };
 
-    const { count, rows } = await db.Category.findAndCountAll({
+    // 1. Đếm riêng số lượng danh mục Gốc (Cha) - Rất nhanh và chính xác
+    const total = await db.Category.count({ where: where });
+
+    // 2. Lấy dữ liệu chi tiết
+    const rows = await db.Category.findAll({
       where: where, // Chỉ lấy cha
       limit: limit, // Giới hạn số lượng cha
       offset: offset,
       order: [["createdAt", "DESC"]],
       attributes: {
         include: [
-          // SỬA TẠI ĐÂY: Sử dụng "product.id" vì alias trong model là "product"
           [
             db.sequelize.fn("COUNT", db.sequelize.col("product.id")),
             "productCount",
@@ -37,10 +39,9 @@ const getListCategory = async (query = {}) => {
           attributes: [],
         },
       ],
-      // Group theo ID của Category và các con để tránh lỗi SQL logic
+      // Group theo Category.id và children.id để Sequelize có thể map dữ liệu
       group: ["Category.id", "children.id"],
       subQuery: false,
-      distinct: true,
     });
 
     return {
@@ -48,7 +49,7 @@ const getListCategory = async (query = {}) => {
       EC: 0,
       DT: {
         categories: rows,
-        total: Array.isArray(count) ? count.length : count,
+        total: total,
         page,
         limit,
       },
