@@ -144,10 +144,21 @@ const updateProfile = async (req, res) => {
     let userID = req.headers["userid"];
 
     const data = await authService.updateProfile(userID, req.body);
-    
+
     return res.status(200).json(data);
   } catch (error) {
     console.error(">>> Error updateProfile:", error);
+    return res.status(500).json({ EM: "Error from server", EC: -1, DT: "" });
+  }
+};
+
+const getListUser = async (req, res) => {
+  try {
+    const data = await authService.getListUser(req.query);
+
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error(">>> Error getListUser:", error);
     return res.status(500).json({ EM: "Error from server", EC: -1, DT: "" });
   }
 };
@@ -159,4 +170,5 @@ module.exports = {
   fetchAccount,
   changePassword,
   updateProfile,
+  getListUser,
 };

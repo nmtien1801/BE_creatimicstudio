@@ -172,10 +172,45 @@ const updateProfile = async (userID, rawData) => {
   }
 };
 
+const getListUser = async (query = {}) => {
+  try {
+    const page = parseInt(query.page) || 1;
+    const limit = parseInt(query.limit) || 10;
+    const offset = (page - 1) * limit;
+    const where = {};
+
+    const { count, rows } = await db.User.findAndCountAll({
+      where: where,
+      limit: limit,
+      offset: offset,
+      order: [["createdAt", "DESC"]],
+    });
+
+    // count: Tổng số bản ghi thỏa mãn điều kiện 'where' (không bị ảnh hưởng bởi limit/offset)
+    // rows: Danh sách bản ghi của trang hiện tại
+
+    return {
+      EM: "lấy danh sách thành công",
+      EC: 0,
+      DT: {
+        user: rows,
+        total: count, // Đây là tổng số bản ghi thực tế trong DB
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit), // Gợi ý thêm: tính tổng số trang
+      },
+    };
+  } catch (error) {
+    console.error(">>> Lỗi lấy danh sách:", error);
+    return { EM: "Error from service", EC: -1, DT: "" };
+  }
+};
+
 // ====================== EXPORT ======================
 export default {
   handleRegister,
   handleLogin,
   changePassword,
-  updateProfile
+  updateProfile,
+  getListUser,
 };
