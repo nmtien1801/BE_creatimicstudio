@@ -163,6 +163,40 @@ const getListUser = async (req, res) => {
   }
 };
 
+const createUser = async (req, res) => {
+  try {
+    const data = await authService.createUser(req.body);
+
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error(">>> Error createUser:", error);
+    return res.status(500).json({ EM: "Error from server", EC: -1, DT: "" });
+  }
+};
+
+const updateUser = async (req, res) => {
+  try {
+    const data = await authService.updateUser(req.body);
+
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error(">>> Error updateUser:", error);
+    return res.status(500).json({ EM: "Error from server", EC: -1, DT: "" });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const data = await authService.deleteUser(userId);
+
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error(">>> Error deleteUser:", error);
+    return res.status(500).json({ EM: "Error from server", EC: -1, DT: "" });
+  }
+};
+
 module.exports = {
   handleLogin,
   handleRegister,
@@ -171,4 +205,7 @@ module.exports = {
   changePassword,
   updateProfile,
   getListUser,
+  createUser,
+  updateUser,
+  deleteUser,
 };

@@ -206,6 +206,113 @@ const getListUser = async (query = {}) => {
   }
 };
 
+const createUser = async (rawData) => {  
+  try {
+    if (rawData.email) {
+      const isEmailExists = await checkEmailExists(rawData.email);
+      if (isEmailExists) {
+        return { EM: "Email already exists", EC: 1, DT: "" };
+      }
+    }
+
+    if (rawData.phone) {
+      const isPhoneExists = await checkPhoneExists(rawData.phone);
+      if (isPhoneExists) {
+        return { EM: "Phone number already exists", EC: 1, DT: "" };
+      }
+    }
+
+    const password = rawData.password || "123456";
+    const newUser = await db.User.create({
+      userName: rawData.userName || rawData.username || "",
+      email: rawData.email || "",
+      password: hashPassword(password),
+      phone: rawData.phone || "",
+      address: rawData.address || "",
+      role: rawData.role || "client",
+      image: rawData.image || "",
+    });
+
+    return {
+      EM: "User created successfully",
+      EC: 0,
+      DT: {
+        id: newUser.id,
+        email: newUser.email,
+        userName: newUser.userName,
+      },
+    };
+  } catch (error) {
+    console.error(">>> Error createUser:", error);
+    return { EM: "Error from service (createUser)", EC: -1, DT: "" };
+  }
+};
+
+const updateUser = async (rawData) => {
+  try {
+      console.log('ssssssss ', rawData);
+
+    const user = await db.User.findOne({ where: { id: rawData.id } });
+    if (!user) {
+      return { EM: "Không tìm thấy người dùng", EC: 1, DT: "" };
+    }
+
+    if (rawData.email) {
+      const existed = await db.User.findOne({
+        where: { email: rawData.email, id: { [Op.ne]: rawData.id } },
+      });
+      if (existed) {
+        return { EM: "Email already exists", EC: 1, DT: "" };
+      }
+    }
+
+    if (rawData.phone) {
+      const existedPhone = await db.User.findOne({
+        where: { phone: rawData.phone, id: { [Op.ne]: rawData.id } },
+      });
+      if (existedPhone) {
+        return { EM: "Phone number already exists", EC: 1, DT: "" };
+      }
+    }
+
+    const updateObj = {
+      userName: rawData.userName ?? user.userName,
+      phone: rawData.phone ?? user.phone,
+      email: rawData.email ?? user.email,
+      address: rawData.address ?? user.address,
+      role: rawData.role ?? user.role,
+      image: rawData.image ?? user.image,
+    };
+
+    if (rawData.password) {
+      updateObj.password = hashPassword(rawData.password);
+    }
+
+    await user.update(updateObj);
+
+    return { EM: "Cập nhật người dùng thành công", EC: 0, DT: user };
+  } catch (error) {
+    console.error(">>> Error updateUser:", error);
+    return { EM: "Error from service (updateUser)", EC: -1, DT: "" };
+  }
+};
+
+const deleteUser = async (userID) => {
+  try {
+    const user = await db.User.findOne({ where: { id: userID } });
+    if (!user) {
+      return { EM: "Không tìm thấy người dùng", EC: 1, DT: "" };
+    }
+
+    await user.destroy();
+
+    return { EM: "Xóa người dùng thành công", EC: 0, DT: "" };
+  } catch (error) {
+    console.error(">>> Error deleteUser:", error);
+    return { EM: "Error from service (deleteUser)", EC: -1, DT: "" };
+  }
+};
+
 // ====================== EXPORT ======================
 export default {
   handleRegister,
@@ -213,4 +320,7 @@ export default {
   changePassword,
   updateProfile,
   getListUser,
+  createUser,
+  updateUser,
+  deleteUser,
 };

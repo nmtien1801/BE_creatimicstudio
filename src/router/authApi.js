@@ -17,9 +17,11 @@ const AuthRoutes = (app) => {
 
   router.post("/auth/change-password", authController.changePassword);
   router.put("/auth/update-profile", authController.updateProfile);
-  
-  router.get("/auth/getListUser", authController.getListUser);
 
+  router.get("/auth/getListUser", authController.getListUser);
+  router.post("/auth/create-user", authController.createUser);
+  router.put("/auth/update-user/:id", authController.updateUser);
+  router.delete("/auth/delete-user/:id", authController.deleteUser);
   return app.use("/api", router);
 };
 
