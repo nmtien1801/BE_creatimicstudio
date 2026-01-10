@@ -71,8 +71,8 @@ const createPost = async (userName, data) => {
     }
     const newPost = await db.Post.create({
       ...data,
-      userCreate: userName,
-      userUpdate: userName,
+      userCreate: decodeURIComponent(userName),
+      userUpdate: decodeURIComponent(userName),
     });
 
     return {
@@ -99,7 +99,7 @@ const updatePost = async (id, userName, data) => {
     if (post) {
       await post.update({
         ...data,
-        userUpdate: userName,
+        userUpdate: decodeURIComponent(userName),
       });
 
       return {

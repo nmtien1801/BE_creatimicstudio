@@ -24,10 +24,10 @@ module.exports = {
         type: Sequelize.BOOLEAN,
       },
       userUpdate: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.STRING,
       },
       userCreate: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.STRING,
       },
       
       createdAt: {
