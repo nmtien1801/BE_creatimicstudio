@@ -7,6 +7,8 @@ module.exports = (sequelize, DataTypes) => {
   Recruitment.init(
     {
       title: DataTypes.STRING,
+      type: DataTypes.STRING,
+      experience: DataTypes.STRING,
       image: DataTypes.STRING,
       description: DataTypes.TEXT,
       detail: DataTypes.TEXT,

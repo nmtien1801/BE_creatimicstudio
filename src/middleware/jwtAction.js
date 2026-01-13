@@ -38,11 +38,14 @@ const verifyRefreshToken = (token) => {
 };
 
 const nonSecurePaths = [
-  "/",
-  "/auth/login",
-  "/auth/logout",
-  "/auth/register",
-  "/auth/refreshToken",
+  /^\/$/,
+  /^\/auth\/login$/,
+  /^\/auth\/logout$/,
+  /^\/auth\/register$/,
+  /^\/auth\/refreshToken$/,
+  /^\/recruitment\/list$/,
+  /^\/recruitment\/byRecruitmentId\/[^/]+$/,
+  /^\/file\/getFile/,
 ];
 
 // lấy token từ header Authorization: Bearer <token>
@@ -58,14 +61,16 @@ const extractToken = (req) => {
 
 // middleware kiểm tra JWT
 const checkUserJwt = async (req, res, next) => {
-  if (nonSecurePaths.includes(req.path)) return next(); // kh check middleware url (2)
+  // kh check middleware url (2)
+  if (nonSecurePaths.some((pattern) => pattern.test(req.path))) {
+    return next();
+  }
   let cookies = req.cookies;
   let tokenFromHeader = extractToken(req);
 
   if ((cookies && cookies.fr) || tokenFromHeader) {
     // bug vừa vào đã check quyền xác thực khi chưa login của Context
-    let accessToken =
-      cookies && cookies.fr ? cookies.fr : tokenFromHeader;
+    let accessToken = cookies && cookies.fr ? cookies.fr : tokenFromHeader;
     let decoded = verifyToken(accessToken);
 
     if (decoded && decoded !== "TokenExpiredError") {
@@ -106,9 +111,4 @@ const checkUserJwt = async (req, res, next) => {
   }
 };
 
-export {
-  createToken,
-  verifyToken,
-  checkUserJwt,
-  verifyRefreshToken,
-};
+export { createToken, verifyToken, checkUserJwt, verifyRefreshToken };
