@@ -14,24 +14,33 @@ const getListCategory = async (query = {}) => {
 
     // 2. Lấy dữ liệu chi tiết
     const rows = await db.Category.findAll({
-      where: where,
-      limit: limit,
-      offset: offset,
+      where,
+      limit,
+      offset,
       order: [["createdAt", "DESC"]],
       attributes: {
         include: [
           // Subquery đếm sản phẩm cho danh mục CHA
           [
             db.sequelize.literal(`(
-              SELECT COUNT(*)
-              FROM "ProductCategory" AS "cp"
-              WHERE "cp"."categoryId" = "Category"."id"
-            )`),
+          SELECT COUNT(*)
+          FROM "ProductCategory" AS "cp"
+          WHERE "cp"."categoryId" = "Category"."id"
+        )`),
             "productCount",
           ],
         ],
       },
       include: [
+        // ===== PRODUCTS CỦA CATEGORY CHA =====
+        // {
+        //   model: db.Product,
+        //   as: "product",
+        //   attributes: ["id", "name", "price", "image", "description", "detail", "status"],
+        //   through: { attributes: [] }, // ẩn bảng trung gian
+        // },
+
+        // ===== CATEGORY CON =====
         {
           model: db.Category,
           as: "children",
@@ -44,12 +53,21 @@ const getListCategory = async (query = {}) => {
             // Subquery đếm sản phẩm cho danh mục CON
             [
               db.sequelize.literal(`(
-                SELECT COUNT(*)
-                FROM "ProductCategory" AS "cp"
-                WHERE "cp"."categoryId" = "children"."id"
-              )`),
+            SELECT COUNT(*)
+            FROM "ProductCategory" AS "cp"
+            WHERE "cp"."categoryId" = "children"."id"
+          )`),
               "productCount",
             ],
+          ],
+          include: [
+            // ===== PRODUCTS CỦA CATEGORY CON =====
+            {
+              model: db.Product,
+              as: "product",
+              attributes: ["id", "name", "price", "image", "description", "detail", "status"],
+              through: { attributes: [] },
+            },
           ],
         },
       ],

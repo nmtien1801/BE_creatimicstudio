@@ -45,6 +45,13 @@ const nonSecurePaths = [
   /^\/auth\/refreshToken$/,
   /^\/recruitment\/list$/,
   /^\/recruitment\/byRecruitmentId\/[^/]+$/,
+  /^\/post\/list$/,
+  /^\/post\/byPostId\/[^/]+$/,
+  /^\/product\/list$/,
+  /^\/product\/dropdown$/,
+  /^\/product\/byProductId\/[^/]+$/,
+  /^\/product-category\/byCategory\/[^/]+$/,
+  /^\/category\/list$/,
   /^\/file\/getFile/,
 ];
 
