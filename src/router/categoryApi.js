@@ -9,6 +9,7 @@ const ApiCategory = (app) => {
   router.use(checkUserJwt);
 
   router.get("/category/list", categoryController.getListCategory); // GET /api/category/list?page=1&limit=10
+  router.get("/category/filter", categoryController.getFilteredCategories); // GET /api/category/filter?page=1&limit=10&categoryId=1&priceProduct=100
   router.get("/category/:id", categoryController.getCategoryById);
   router.post("/category/create", categoryController.createCategory);
   router.put("/category/update/:id", categoryController.updateCategory);

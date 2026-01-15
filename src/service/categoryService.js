@@ -65,7 +65,15 @@ const getListCategory = async (query = {}) => {
             {
               model: db.Product,
               as: "product",
-              attributes: ["id", "name", "price", "image", "description", "detail", "status"],
+              attributes: [
+                "id",
+                "name",
+                "price",
+                "image",
+                "description",
+                "detail",
+                "status",
+              ],
               through: { attributes: [] },
             },
           ],
@@ -161,10 +169,79 @@ const deleteCategory = async (id) => {
   }
 };
 
+const getFilteredCategories = async (query = {}) => {
+  try {
+    const page = parseInt(query.page) || 1;
+    const limit = parseInt(query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const where = {};
+    if (query.categoryId && query.categoryId !== "all") {
+      where.id = Number(query.categoryId);
+    }
+
+    let includeProduct;
+
+    if (
+      query.priceProduct &&
+      query.priceProduct !== "all" &&
+      !isNaN(Number(query.priceProduct))
+    ) {
+      includeProduct = {
+        model: db.Product,
+        as: "product",
+        attributes: [
+          "id",
+          "name",
+          "price",
+          "image",
+          "description",
+          "detail",
+          "status",
+        ],
+        through: { attributes: [] },
+        where: {
+          price: { [Op.gte]: Number(query.priceProduct) },
+        },
+        required: true,
+      };
+    }
+
+    const total = await db.Category.count({
+      where,
+      include: includeProduct ? [includeProduct] : [],
+      distinct: true,
+    });
+
+    const rows = await db.Category.findAll({
+      where,
+      limit,
+      offset,
+      order: [["createdAt", "DESC"]],
+      include: includeProduct ? [includeProduct] : [],
+    });
+
+    return {
+      EM: "Get filtered categories success",
+      EC: 0,
+      DT: {
+        categories: rows,
+        total,
+        page,
+        limit,
+      },
+    };
+  } catch (error) {
+    console.error(">>> Error getFilteredCategories:", error);
+    return { EM: "Error from service (getFilteredCategories)", EC: -1, DT: "" };
+  }
+};
+
 export default {
   getListCategory,
   getCategoryById,
   createCategory,
   updateCategory,
   deleteCategory,
+  getFilteredCategories,
 };

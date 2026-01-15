@@ -53,10 +53,21 @@ const deleteCategory = async (req, res) => {
   }
 };
 
+const getFilteredCategories = async (req, res) => {
+  try {
+    const data = await categoryService.getFilteredCategories(req.query);
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error(">>> Error getFilteredCategories:", error);
+    return res.status(500).json({ EM: "Error getFilteredCategories from server", EC: -1, DT: "" });
+  }
+};
+
 export default {
   getListCategory,
   getCategoryById,
   createCategory,
   updateCategory,
   deleteCategory,
+  getFilteredCategories,
 };
