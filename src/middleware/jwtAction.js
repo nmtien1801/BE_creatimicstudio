@@ -53,6 +53,7 @@ const nonSecurePaths = [
   /^\/product-category\/byCategory\/[^/]+$/,
   /^\/category\/list$/,
   /^\/category\/filter$/,
+  /^\/product\/filter$/,
   /^\/file\/getFile/,
 ];
 

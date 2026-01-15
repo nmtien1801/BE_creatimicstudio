@@ -9,6 +9,7 @@ const ApiProduct = (app) => {
   router.use(checkUserJwt);
 
   router.get("/product/list", productController.getListProduct); // GET /api/product/list?page=1&limit=10
+  router.get("/product/filter", productController.getFilteredProducts); // GET /api/product/filter?page=1&limit=10&categoryId=1&priceProduct=100
   router.get("/product/byProductId/:id", productController.getProductById);
   router.post("/product/create", productController.createProduct);
   router.put("/product/update/:id", productController.updateProduct);

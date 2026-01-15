@@ -67,6 +67,16 @@ const getListProductDropdown = async (req, res) => {
   }
 };
 
+const getFilteredProducts = async (req, res) => {
+  try {
+    const data = await productService.getFilteredProducts(req.query);
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error(">>> Error getFilteredProducts:", error);
+    return res.status(500).json({ EM: "Error getFilteredProducts from server", EC: -1, DT: "" });
+  }
+};
+
 export default {
   getListProduct,
   getProductById,
@@ -74,4 +84,5 @@ export default {
   updateProduct,
   deleteProduct,
   getListProductDropdown,
+  getFilteredProducts,
 };

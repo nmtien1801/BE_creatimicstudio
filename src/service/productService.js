@@ -108,6 +108,58 @@ const getListProductDropdown = async () => {
   }
 };
 
+const getFilteredProducts = async (query = {}) => {
+  try {
+    const page = parseInt(query.page) || 1;
+    const limit = parseInt(query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const where = {};
+    if (query.priceProduct && query.priceProduct !== "all" && !isNaN(Number(query.priceProduct))) {
+      where.price = { [Op.gte]: Number(query.priceProduct) };
+    }
+
+    let includeCategory;
+    if (query.categoryId && query.categoryId !== "all") {
+      includeCategory = {
+        model: db.Category,
+        as: "category",
+        where: { id: Number(query.categoryId) },
+        required: true,
+        through: { attributes: [] },
+      };
+    }
+
+    const total = await db.Product.count({
+      where,
+      include: includeCategory ? [includeCategory] : [],
+      distinct: true,
+    });
+
+    const rows = await db.Product.findAll({
+      where,
+      limit,
+      offset,
+      order: [["createdAt", "DESC"]],
+      include: includeCategory ? [includeCategory] : [],
+    });
+
+    return {
+      EM: "Get filtered products success",
+      EC: 0,
+      DT: {
+        products: rows,
+        total,
+        page,
+        limit,
+      },
+    };
+  } catch (error) {
+    console.error(">>> Error getFilteredProducts:", error);
+    return { EM: "Error from service (getFilteredProducts)", EC: -1, DT: "" };
+  }
+};
+
 export default {
   getListProduct,
   getProductById,
@@ -115,4 +167,5 @@ export default {
   updateProduct,
   deleteProduct,
   getListProductDropdown,
+  getFilteredProducts,
 };
