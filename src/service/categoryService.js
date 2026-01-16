@@ -3,43 +3,34 @@ import { Op, sequelize } from "sequelize";
 
 const getListCategory = async (query = {}) => {
   try {
-    const page = parseInt(query.page) || 1;
-    const limit = parseInt(query.limit) || 10;
-    const offset = (page - 1) * limit;
+    // ================== PAGINATION ==================
+    const hasPaging = query.page && query.limit;
 
+    const page = hasPaging ? parseInt(query.page) : null;
+    const limit = hasPaging ? parseInt(query.limit) : null;
+    const offset = hasPaging ? (page - 1) * limit : null;
+
+    // ================== WHERE ==================
     const where = { parentId: null };
 
-    // 1. Đếm tổng số danh mục cha
-    const total = await db.Category.count({ where });
-
-    // 2. Lấy dữ liệu chi tiết
-    const rows = await db.Category.findAll({
+    // ================== FIND OPTIONS ==================
+    const findOptions = {
       where,
-      limit,
-      offset,
       order: [["createdAt", "DESC"]],
       attributes: {
         include: [
           // Subquery đếm sản phẩm cho danh mục CHA
           [
             db.sequelize.literal(`(
-          SELECT COUNT(*)
-          FROM "ProductCategory" AS "cp"
-          WHERE "cp"."categoryId" = "Category"."id"
-        )`),
+              SELECT COUNT(*)
+              FROM "ProductCategory" AS "cp"
+              WHERE "cp"."categoryId" = "Category"."id"
+            )`),
             "productCount",
           ],
         ],
       },
       include: [
-        // ===== PRODUCTS CỦA CATEGORY CHA =====
-        // {
-        //   model: db.Product,
-        //   as: "product",
-        //   attributes: ["id", "name", "price", "image", "description", "detail", "status"],
-        //   through: { attributes: [] }, // ẩn bảng trung gian
-        // },
-
         // ===== CATEGORY CON =====
         {
           model: db.Category,
@@ -53,10 +44,10 @@ const getListCategory = async (query = {}) => {
             // Subquery đếm sản phẩm cho danh mục CON
             [
               db.sequelize.literal(`(
-            SELECT COUNT(*)
-            FROM "ProductCategory" AS "cp"
-            WHERE "cp"."categoryId" = "children"."id"
-          )`),
+                SELECT COUNT(*)
+                FROM "ProductCategory" AS "cp"
+                WHERE "cp"."categoryId" = "children"."id"
+              )`),
               "productCount",
             ],
           ],
@@ -79,8 +70,21 @@ const getListCategory = async (query = {}) => {
           ],
         },
       ],
-    });
+    };
 
+    // ================== APPLY PAGINATION ==================
+    if (hasPaging) {
+      findOptions.limit = limit;
+      findOptions.offset = offset;
+    }
+
+    // ================== QUERY ==================
+    const rows = await db.Category.findAll(findOptions);
+
+    // ================== TOTAL ==================
+    const total = hasPaging ? await db.Category.count({ where }) : rows.length;
+
+    // ================== RESPONSE ==================
     return {
       EM: "Get category list success",
       EC: 0,
@@ -93,7 +97,11 @@ const getListCategory = async (query = {}) => {
     };
   } catch (error) {
     console.error(">>> Error getListCategory:", error);
-    return { EM: "Error from service (getListCategory)", EC: -1, DT: "" };
+    return {
+      EM: "Error from service (getListCategory)",
+      EC: -1,
+      DT: "",
+    };
   }
 };
 

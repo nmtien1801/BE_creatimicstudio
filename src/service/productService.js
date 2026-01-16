@@ -115,8 +115,22 @@ const getFilteredProducts = async (query = {}) => {
     const offset = (page - 1) * limit;
 
     const where = {};
-    if (query.priceProduct && query.priceProduct !== "all" && !isNaN(Number(query.priceProduct))) {
-      where.price = { [Op.gte]: Number(query.priceProduct) };
+    if (query.priceProduct && query.priceProduct !== "all") {
+      switch (query.priceProduct) {
+        case "under500k":
+          where.price = { [Op.lt]: 500000 };
+          break;
+
+        case "500kto1m":
+          where.price = {
+            [Op.between]: [500000, 1000000],
+          };
+          break;
+
+        case "over1m":
+          where.price = { [Op.gt]: 1000000 };
+          break;
+      }
     }
 
     let includeCategory;
