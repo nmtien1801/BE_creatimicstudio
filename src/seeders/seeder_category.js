@@ -10,21 +10,30 @@ module.exports = {
           icon: "fas fa-laptop",
           status: true,
           parentId: null, // Root category
+
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
         {
           name: "Phụ kiện thu âm",
           icon: "fas fa-tshirt",
           status: true,
           parentId: null, // Root category
+
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
         {
           name: "Loa kiểm âm",
           icon: "fas fa-book",
           status: true,
           parentId: null, // Root category
+
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       ],
-      {}
+      {},
     );
   },
 
