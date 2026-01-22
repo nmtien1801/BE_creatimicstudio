@@ -14,9 +14,12 @@ module.exports = {
           phone: "0967273063",
           address: "123 Main St, City, Country",
           role: "admin",
+
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       ],
-      {}
+      {},
     );
   },
 
