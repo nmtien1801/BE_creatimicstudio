@@ -5,8 +5,8 @@ dotenv.config();
 
 let getBodyHTMLContactEmail = (name, email, message) => {
   return `
-        <h3> Thông tin liên hệ từ ${name}</h3>
-        <p><strong>Email:</strong> ${email}</p>
+        <h3> Thông tin liên hệ từ:  ${name}</h3>
+        <p><strong>Email của tôi:</strong> ${email}</p>
         <p><strong>Tin nhắn:</strong></p>
         <p>${message}</p>
         <div> <b>Trân trọng!</b> </div>
@@ -39,5 +39,4 @@ let sendContactEmail = async (name, email, message) => {
   }
 };
 
-
-export { sendContactEmail };
+export default { sendContactEmail };

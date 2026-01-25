@@ -43,6 +43,7 @@ const nonSecurePaths = [
   /^\/auth\/logout$/,
   /^\/auth\/register$/,
   /^\/auth\/refreshToken$/,
+  /^\/contact\/send$/,
   /^\/recruitment\/list$/,
   /^\/recruitment\/byRecruitmentId\/[^/]+$/,
   /^\/post\/list$/,
