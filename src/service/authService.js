@@ -250,8 +250,6 @@ const createUser = async (rawData) => {
 
 const updateUser = async (rawData) => {
   try {
-      console.log('ssssssss ', rawData);
-
     const user = await db.User.findOne({ where: { id: rawData.id } });
     if (!user) {
       return { EM: "Không tìm thấy người dùng", EC: 1, DT: "" };
