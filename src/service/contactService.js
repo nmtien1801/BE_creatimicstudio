@@ -16,12 +16,15 @@ let getBodyHTMLContactEmail = (name, email, message) => {
 let sendContactEmail = async (name, email, message) => {
   try {
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
+      host: "mail.creatimichub.vn", // Lấy ở mục Outgoing Server trong cPanel
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.EMAIL_APP,
         pass: process.env.EMAIL_APP_PASSWORD,
+      },
+      tls: {
+        rejectUnauthorized: false, // Giúp tránh một số lỗi handshake trên một số server
       },
     });
 
