@@ -5,7 +5,6 @@ const getListCategory = async (query = {}) => {
   try {
     // ================== PAGINATION ==================
     const hasPaging = query.page && query.limit;
-
     const page = hasPaging ? parseInt(query.page) : null;
     const limit = hasPaging ? parseInt(query.limit) : null;
     const offset = hasPaging ? (page - 1) * limit : null;
@@ -31,7 +30,14 @@ const getListCategory = async (query = {}) => {
         ],
       },
       include: [
-        // ===== CATEGORY CON =====
+        // ===== 1. PRODUCTS CỦA CATEGORY CHA =====
+        {
+          model: db.Product,
+          as: "product", // Đảm bảo alias này khớp với khai báo trong model
+          attributes: ["id", "name", "price", "image", "status"],
+          through: { attributes: [] },
+        },
+        // ===== 2. CATEGORY CON =====
         {
           model: db.Category,
           as: "children",
@@ -56,15 +62,7 @@ const getListCategory = async (query = {}) => {
             {
               model: db.Product,
               as: "product",
-              attributes: [
-                "id",
-                "name",
-                "price",
-                "image",
-                "description",
-                "detail",
-                "status",
-              ],
+              attributes: ["id", "name", "price", "image", "status"],
               through: { attributes: [] },
             },
           ],
@@ -88,20 +86,11 @@ const getListCategory = async (query = {}) => {
     return {
       EM: "Get category list success",
       EC: 0,
-      DT: {
-        categories: rows,
-        total,
-        page,
-        limit,
-      },
+      DT: { categories: rows, total, page, limit },
     };
   } catch (error) {
     console.error(">>> Error getListCategory:", error);
-    return {
-      EM: "Error from service (getListCategory)",
-      EC: -1,
-      DT: "",
-    };
+    return { EM: "Error from service", EC: -1, DT: "" };
   }
 };
 
