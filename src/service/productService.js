@@ -6,9 +6,12 @@ const getListProduct = async (query = {}) => {
     const page = parseInt(query.page) || 1;
     const limit = parseInt(query.limit) || 10;
     const offset = (page - 1) * limit;
+    const keyword = query.keyword || "";
 
     const where = {};
-    if (query.name) where.name = { [Op.like]: `%${query.name}%` };
+    if (keyword) {
+      where.name = { [Op.like]: `%${keyword}%` };
+    }
 
     const products = await db.Product.findAll({
       where,
