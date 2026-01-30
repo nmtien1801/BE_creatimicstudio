@@ -1,5 +1,5 @@
 import db from "../models/index.js";
-import { Op } from "sequelize";
+import { Op, fn, col, where } from "sequelize";
 
 const getListProduct = async (query = {}) => {
   try {
@@ -8,20 +8,24 @@ const getListProduct = async (query = {}) => {
     const offset = (page - 1) * limit;
     const keyword = query.keyword || "";
 
-    const where = {};
+    const condition = {};
+
     if (keyword) {
-      where.name = { [Op.like]: `%${keyword.toLowerCase()}%` };
+      condition.name = where(fn("LOWER", col("name")), {
+        [Op.like]: `%${keyword.toLowerCase()}%`,
+      });
     }
 
     const products = await db.Product.findAll({
-      where,
+      where: condition,
       limit,
       offset,
       order: [["createdAt", "DESC"]],
     });
 
-    // 🔹 Lấy tổng ALL (không limit)
-    const total = await db.Product.count({ where });
+    const total = await db.Product.count({
+      where: condition,
+    });
 
     return {
       EM: "Get product list success",
