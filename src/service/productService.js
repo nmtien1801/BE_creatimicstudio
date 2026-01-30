@@ -10,7 +10,7 @@ const getListProduct = async (query = {}) => {
 
     const where = {};
     if (keyword) {
-      where.name = { [Op.like]: `%${keyword}%` };
+      where.name = { [Op.like]: `%${keyword.toLowerCase()}%` };
     }
 
     const products = await db.Product.findAll({
