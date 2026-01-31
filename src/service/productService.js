@@ -115,69 +115,96 @@ const getListProductDropdown = async () => {
   }
 };
 
+const getCategoryIdsRecursive = async (parentId) => {
+  let ids = [parentId];
+
+  // Tìm các danh mục con trực tiếp của parentId
+  const children = await db.Category.findAll({
+    where: { parentId: parentId },
+    attributes: ["id"],
+    raw: true,
+  });
+
+  // Duyệt qua từng con để lấy tiếp các cháu (đệ quy)
+  for (const child of children) {
+    const childIds = await getCategoryIdsRecursive(child.id);
+    ids = ids.concat(childIds);
+  }
+
+  return ids;
+};
+
 const getFilteredProducts = async (query = {}) => {
   try {
     const page = parseInt(query.page) || 1;
-    const limit = parseInt(query.limit) || 10;
+    const limit = parseInt(query.limit) || 8; // Số lượng sản phẩm mỗi trang
     const offset = (page - 1) * limit;
 
-    const where = {};
+    const whereCondition = {};
+
+    // 1. Lọc theo giá (Price Range)
     if (query.priceProduct && query.priceProduct !== "all") {
       switch (query.priceProduct) {
         case "under500k":
-          where.price = { [Op.lt]: 500000 };
+          whereCondition.price = { [Op.lt]: 500000 };
           break;
-
         case "500kto1m":
-          where.price = {
-            [Op.between]: [500000, 1000000],
-          };
+          whereCondition.price = { [Op.between]: [500000, 1000000] };
           break;
-
         case "over1m":
-          where.price = { [Op.gt]: 1000000 };
+          whereCondition.price = { [Op.gt]: 1000000 };
           break;
       }
     }
 
-    let includeCategory;
+    // 2. Xử lý logic Category (Lấy cả sản phẩm của con nếu chọn cha)
+    let includeCategory = {
+      model: db.Category,
+      as: "category",
+      through: { attributes: [] },
+    };
+
     if (query.categoryId && query.categoryId !== "all") {
-      includeCategory = {
-        model: db.Category,
-        as: "category",
-        where: { id: Number(query.categoryId) },
-        required: true,
-        through: { attributes: [] },
+      const targetId = Number(query.categoryId);
+
+      // Lấy danh sách ID gồm: ID hiện tại + ID của tất cả các con/cháu
+      const allCategoryIds = await getCategoryIdsRecursive(targetId);
+
+      // Cập nhật điều kiện WHERE cho bảng Category được JOIN vào
+      includeCategory.where = {
+        id: { [Op.in]: allCategoryIds }, // Sử dụng toán tử IN (id1, id2, id3...)
       };
+      includeCategory.required = true; // Bắt buộc phải có category thuộc list này
     }
 
-    const total = await db.Product.count({
-      where,
-      include: includeCategory ? [includeCategory] : [],
-      distinct: true,
-    });
-
-    const rows = await db.Product.findAll({
-      where,
-      limit,
-      offset,
+    // 3. Truy vấn dữ liệu
+    // Sử dụng findAndCountAll để lấy cả danh sách và tổng số lượng cùng lúc
+    const { count, rows } = await db.Product.findAndCountAll({
+      where: whereCondition,
+      limit: limit,
+      offset: offset,
       order: [["createdAt", "DESC"]],
-      include: includeCategory ? [includeCategory] : [],
+      include: [includeCategory],
+      distinct: true, // Tránh đếm lặp sản phẩm khi JOIN
     });
 
     return {
-      EM: "Get filtered products success",
+      EM: "Lấy danh sách sản phẩm thành công",
       EC: 0,
       DT: {
         products: rows,
-        total,
-        page,
-        limit,
+        total: count,
+        page: page,
+        limit: limit,
       },
     };
   } catch (error) {
     console.error(">>> Error getFilteredProducts:", error);
-    return { EM: "Error from service (getFilteredProducts)", EC: -1, DT: "" };
+    return {
+      EM: "Có lỗi xảy ra ở phía Server",
+      EC: -1,
+      DT: "",
+    };
   }
 };
 
