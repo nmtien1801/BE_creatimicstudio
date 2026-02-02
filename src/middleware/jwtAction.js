@@ -56,6 +56,7 @@ const nonSecurePaths = [
   /^\/category\/filter$/,
   /^\/product\/filter$/,
   /^\/file\/getFile/,
+  /^\/product-image\/byProductId\/[^/]+$/,
 ];
 
 // lấy token từ header Authorization: Bearer <token>
