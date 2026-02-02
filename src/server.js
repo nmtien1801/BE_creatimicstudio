@@ -13,6 +13,7 @@ import ApiUPload from "./router/fileApi";
 import ApiPost from "./router/postApi";
 import ApiRecruitment from "./router/recruitmentApi";
 import ApiContact from "./router/contactApi";
+import ApiProductImage from "./router/productImageApi";
 // const corsMiddleware = require("./config/cors");
 
 const app = express();
@@ -33,6 +34,7 @@ ApiUPload(app);
 ApiPost(app);
 ApiRecruitment(app);
 ApiContact(app);
+ApiProductImage(app);
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {

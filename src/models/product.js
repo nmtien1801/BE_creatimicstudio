@@ -9,6 +9,10 @@ module.exports = (sequelize, DataTypes) => {
         otherKey: "categoryId", // Khóa ngoại trỏ đến Category
         as: "category", // Alias khi truy vấn
       });
+      Product.hasMany(models.ProductImage, {
+        foreignKey: 'productId',
+        as: 'images'
+      });
     }
   }
   Product.init(
