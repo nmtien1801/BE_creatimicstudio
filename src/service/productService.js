@@ -16,6 +16,11 @@ const getListProduct = async (query = {}) => {
       });
     }
 
+    // filter on top‑seller flag when requested
+    if (query.isTopSeller !== undefined) {
+      condition.isTopSeller = query.isTopSeller === "true" || query.isTopSeller === true;
+    }
+
     const products = await db.Product.findAll({
       where: condition,
       limit,
@@ -58,6 +63,7 @@ const createProduct = async (rawData) => {
       detail: rawData.detail || "",
       price: rawData.price ?? 0,
       status: rawData.status ?? true,
+      isTopSeller: rawData.isTopSeller ?? false,
     });
 
     return { EM: "Create product success", EC: 0, DT: newProduct };
@@ -79,6 +85,7 @@ const updateProduct = async (id, rawData) => {
       detail: rawData.detail ?? product.detail,
       price: rawData.price ?? product.price,
       status: rawData.status ?? product.status,
+      isTopSeller: rawData.isTopSeller ?? product.isTopSeller,
     };
 
     await product.update(updates);

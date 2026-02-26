@@ -23,6 +23,10 @@ module.exports = (sequelize, DataTypes) => {
       detail: DataTypes.TEXT,
       price: DataTypes.FLOAT,
       status: DataTypes.BOOLEAN,
+      isTopSeller: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
     },
     {
       sequelize,
