@@ -2,6 +2,7 @@ require("dotenv").config();
 import express from "express";
 import configCORS from "./config/cors";
 import cookieParser from "cookie-parser";
+const path = require("path");
 
 // Routers
 import authApi from "./router/authApi";
@@ -24,6 +25,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cookieParser());
+// Dòng này cho phép truy cập: http://localhost:8080/upload/images/abc.png
+app.use('/upload', express.static(path.join(__dirname, '..', 'upload')));
 // connectDB();
 
 authApi(app);

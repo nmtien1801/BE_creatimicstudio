@@ -58,6 +58,7 @@ const nonSecurePaths = [
   /^\/file\/getFile/,
   /^\/product-image\/byProductId\/[^/]+$/,
   /^\/zalo-status$/,
+  /^\/upload\/.*/,
 ];
 
 // lấy token từ header Authorization: Bearer <token>
