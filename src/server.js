@@ -26,7 +26,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(cookieParser());
 // Dòng này cho phép truy cập: http://localhost:8080/upload/images/abc.png
-app.use('/upload', express.static(path.join(__dirname, '..', 'upload')));
+app.use('/api/upload', express.static(path.join(__dirname, '..', 'upload')));
 // connectDB();
 
 authApi(app);
