@@ -37,4 +37,42 @@ const handleSendContact = async (req, res) => {
   }
 };
 
-export default { handleSendContact };
+const handleApplyContact = async (req, res) => {
+  try {
+    const { name, email, phone } = req.body;
+    const file = req.file;
+
+    if (!name || !email || !phone || !file) {
+      return res.status(400).json({
+        EM: "Thiếu thông tin bắt buộc (name, email, phone, file)",
+        EC: 1,
+        DT: "",
+      });
+    }
+
+    const result = await contactService.sendApplyEmail(name, email, phone, file);
+
+    if (result.success) {
+      return res.status(200).json({
+        EM: "Gửi email ứng tuyển thành công",
+        EC: 0,
+        DT: result,
+      });
+    } else {
+      return res.status(500).json({
+        EM: "Lỗi gửi email ứng tuyển",
+        EC: -1,
+        DT: result.error,
+      });
+    }
+  } catch (error) {
+    console.error("Error in handleApplyContact:", error);
+    return res.status(500).json({
+      EM: "Error from server",
+      EC: -1,
+      DT: "",
+    });
+  }
+};
+
+export default { handleSendContact, handleApplyContact };
