@@ -21,6 +21,11 @@ const getListProduct = async (query = {}) => {
       condition.isTopSeller = query.isTopSeller === "true" || query.isTopSeller === true;
     }
 
+    // filter by maSP if provided
+    if (query.maSP) {
+      condition.maSP = query.maSP;
+    }
+
     const products = await db.Product.findAll({
       where: condition,
       limit,
@@ -64,6 +69,7 @@ const createProduct = async (rawData) => {
       price: rawData.price ?? 0,
       status: rawData.status ?? true,
       isTopSeller: rawData.isTopSeller ?? false,
+      maSP: rawData.maSP || "",
     });
 
     return { EM: "Create product success", EC: 0, DT: newProduct };
@@ -86,6 +92,7 @@ const updateProduct = async (id, rawData) => {
       price: rawData.price ?? product.price,
       status: rawData.status ?? product.status,
       isTopSeller: rawData.isTopSeller ?? product.isTopSeller,
+      maSP: rawData.maSP ?? product.maSP,
     };
 
     await product.update(updates);
