@@ -18,7 +18,8 @@ const getListProduct = async (query = {}) => {
 
     // filter on top‑seller flag when requested
     if (query.isTopSeller !== undefined) {
-      condition.isTopSeller = query.isTopSeller === "true" || query.isTopSeller === true;
+      condition.isTopSeller =
+        query.isTopSeller === "true" || query.isTopSeller === true;
     }
 
     // filter by maSP if provided
@@ -159,14 +160,17 @@ const getFilteredProducts = async (query = {}) => {
     // 1. Lọc theo giá (Price Range)
     if (query.priceProduct && query.priceProduct !== "all") {
       switch (query.priceProduct) {
-        case "under500k":
-          whereCondition.price = { [Op.lt]: 500000 };
+        case "under2m":
+          whereCondition.price = { [Op.lt]: 2000000 };
           break;
-        case "500kto1m":
-          whereCondition.price = { [Op.between]: [500000, 1000000] };
+        case "2mto4m":
+          whereCondition.price = { [Op.between]: [2000000, 4000000] };
           break;
-        case "over1m":
-          whereCondition.price = { [Op.gt]: 1000000 };
+        case "4mto8m":
+          whereCondition.price = { [Op.between]: [4000000, 8000000] };
+          break;
+        case "over8m":
+          whereCondition.price = { [Op.gt]: 8000000 };
           break;
       }
     }
