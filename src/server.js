@@ -16,6 +16,7 @@ import ApiRecruitment from "./router/recruitmentApi";
 import ApiContact from "./router/contactApi";
 import ApiProductImage from "./router/productImageApi";
 import ApiZalo from "./router/zalo";
+import UserCutVideoRoutes from "./router/userCutVideoApi";
 // const corsMiddleware = require("./config/cors");
 
 const app = express();
@@ -26,7 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(cookieParser());
 // Dòng này cho phép truy cập: http://localhost:8080/upload/images/abc.png
-app.use('/api/upload', express.static(path.join(__dirname, '..', 'upload')));
+app.use("/api/upload", express.static(path.join(__dirname, "..", "upload")));
 // connectDB();
 
 authApi(app);
@@ -40,6 +41,7 @@ ApiRecruitment(app);
 ApiContact(app);
 ApiProductImage(app);
 ApiZalo(app);
+UserCutVideoRoutes(app);
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
