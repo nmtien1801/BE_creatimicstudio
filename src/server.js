@@ -15,7 +15,7 @@ import ApiPost from "./router/postApi";
 import ApiRecruitment from "./router/recruitmentApi";
 import ApiContact from "./router/contactApi";
 import ApiProductImage from "./router/productImageApi";
-import ApiZalo from "./router/zalo";
+import ApiZalo from "./router/zaloApi";
 import UserCutVideoRoutes from "./router/userCutVideoApi";
 // const corsMiddleware = require("./config/cors");
 
