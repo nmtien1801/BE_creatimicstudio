@@ -17,6 +17,7 @@ import ApiContact from "./router/contactApi";
 import ApiProductImage from "./router/productImageApi";
 import ApiZalo from "./router/zaloApi";
 import UserCutVideoRoutes from "./router/userCutVideoApi";
+import ApiPayment from "./router/paymentApi";
 // const corsMiddleware = require("./config/cors");
 
 const app = express();
@@ -42,6 +43,7 @@ ApiContact(app);
 ApiProductImage(app);
 ApiZalo(app);
 UserCutVideoRoutes(app);
+ApiPayment(app);
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
