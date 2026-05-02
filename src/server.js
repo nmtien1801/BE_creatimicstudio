@@ -15,7 +15,6 @@ import ApiPost from "./router/postApi";
 import ApiRecruitment from "./router/recruitmentApi";
 import ApiContact from "./router/contactApi";
 import ApiProductImage from "./router/productImageApi";
-import ApiZalo from "./router/zaloApi";
 import UserCutVideoRoutes from "./router/userCutVideoApi";
 // const corsMiddleware = require("./config/cors");
 
@@ -40,7 +39,6 @@ ApiPost(app);
 ApiRecruitment(app);
 ApiContact(app);
 ApiProductImage(app);
-ApiZalo(app);
 UserCutVideoRoutes(app);
 
 const PORT = process.env.PORT || 8080;
