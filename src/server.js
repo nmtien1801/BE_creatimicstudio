@@ -16,7 +16,7 @@ import ApiRecruitment from "./router/recruitmentApi";
 import ApiContact from "./router/contactApi";
 import ApiProductImage from "./router/productImageApi";
 import UserCutVideoRoutes from "./router/userCutVideoApi";
-import ApiPayment from "./router/paymentApi";
+import ApiPaymentMomo from "./router/payment/paymentMomoApi";
 // const corsMiddleware = require("./config/cors");
 
 const app = express();
@@ -41,7 +41,7 @@ ApiRecruitment(app);
 ApiContact(app);
 ApiProductImage(app);
 UserCutVideoRoutes(app);
-ApiPayment(app);
+ApiPaymentMomo(app);
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {

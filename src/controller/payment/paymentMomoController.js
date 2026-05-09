@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import axios from "axios";
-import db from "../models/index";
+import db from "../../models/index";
 import { log } from "console";
 
 // MoMo Sandbox Configuration
@@ -144,7 +144,6 @@ export const createMomoQr = async (req, res) => {
         expiresAt: new Date(Date.now() + 15 * 60 * 1000),
       },
     });
-
   } catch (error) {
     console.error(
       "Error creating MoMo QR:",
