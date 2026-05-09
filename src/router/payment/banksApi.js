@@ -4,10 +4,14 @@ import { asyncHandler } from "../../middleware/errorHandler.js";
 
 const router = express.Router();
 
-// Lấy toàn bộ danh sách ngân hàng
-router.get("/", asyncHandler(banksController.getAllBanks));
+const banksApi = (app) => {
+  // Lấy toàn bộ danh sách ngân hàng
+  router.get("/banks", asyncHandler(banksController.getAllBanks));
 
-// Chỉ lấy các ngân hàng hỗ trợ chuyển khoản nhanh
-router.get("/transfer", asyncHandler(banksController.getTransferBanks));
+  // Chỉ lấy các ngân hàng hỗ trợ chuyển khoản nhanh
+  router.get("/banks/transfer", asyncHandler(banksController.getTransferBanks));
 
-export default router;
+  return app.use("/api", router);
+};
+
+export default banksApi;

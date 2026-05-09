@@ -1,7 +1,26 @@
-import NodeCache from "node-cache";
 import vietqrClient from "../../config/vietqrClient.js";
 
-const cache = new NodeCache({ stdTTL: 86400 }); // 24h cache
+// Simple in-memory cache as fallback (node-cache optional)
+class SimpleCache {
+  constructor(ttl = 86400) {
+    this.cache = new Map();
+    this.ttl = ttl * 1000;
+  }
+  get(key) {
+    const item = this.cache.get(key);
+    if (!item) return undefined;
+    if (Date.now() > item.exp) {
+      this.cache.delete(key);
+      return undefined;
+    }
+    return item.val;
+  }
+  set(key, val) {
+    this.cache.set(key, { val, exp: Date.now() + this.ttl });
+  }
+}
+
+const cache = new SimpleCache(86400); // 24h cache
 
 const getAllBanks = async (req, res) => {
   const cached = cache.get("banks");

@@ -8,4 +8,8 @@ router.post("/create-order", asyncHandler(paymentController.createOrder));
 router.get("/order/:orderId", asyncHandler(paymentController.getOrderById));
 router.post("/confirm/:orderId", asyncHandler(paymentController.confirmPayment));
 
-export default router;
+const ApiPaymentVietQr = (app) => {
+  return app.use("/api/payment", router);
+};
+
+export default ApiPaymentVietQr;
