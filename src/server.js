@@ -17,6 +17,10 @@ import ApiContact from "./router/contactApi";
 import ApiProductImage from "./router/productImageApi";
 import UserCutVideoRoutes from "./router/userCutVideoApi";
 import ApiPaymentMomo from "./router/payment/paymentMomoApi";
+import ApiPaymentVietQr from "./router/payment/paymentVietQrApi";
+import ApiBanks from "./router/payment/banksApi";
+import ApiQrVietQr from "./router/payment/qrVietQrApi";
+
 // const corsMiddleware = require("./config/cors");
 
 const app = express();
@@ -42,6 +46,9 @@ ApiContact(app);
 ApiProductImage(app);
 UserCutVideoRoutes(app);
 ApiPaymentMomo(app);
+ApiBanks(app);
+ApiPaymentVietQr(app);
+ApiQrVietQr(app);
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {

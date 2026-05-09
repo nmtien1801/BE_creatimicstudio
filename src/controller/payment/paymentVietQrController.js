@@ -1,0 +1,107 @@
+import { v4 as uuidv4 } from "uuid";
+import db from "../../models/index.js";
+
+const createOrder = async (req, res) => {
+  const { totalAmount, description, bankBin, accountNo, accountName } =
+    req.body;
+
+  const amount = Number(totalAmount);
+  if (!amount || amount <= 0)
+    return res
+      .status(400)
+      .json({ success: false, message: "Số tiền không hợp lệ" });
+  if (!bankBin || !accountNo)
+    return res
+      .status(400)
+      .json({ success: false, message: "Thông tin ngân hàng là bắt buộc" });
+
+  const safeAddInfo = String(description || `Thanh toan ${Date.now()}`)
+    .replace(/[^a-zA-Z0-9 ]/g, "")
+    .slice(0, 25);
+  const orderId = `VRQ-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+  const transactionId = uuidv4();
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+  // Lưu DB
+  await db.Order.create({
+    orderId,
+    amount,
+    status: "pending",
+    paymentMethod: "vietqr",
+    notes: safeAddInfo,
+    expiresAt,
+  });
+  await db.Payment.create({
+    orderId,
+    transactionId,
+    paymentMethod: "vietqr",
+    status: "pending",
+    responseMessage: safeAddInfo,
+    amount,
+  });
+
+  const qrImageUrl = `https://img.vietqr.io/image/${bankBin}-${accountNo}-compact2.png?amount=${amount}&addInfo=${safeAddInfo}${accountName ? `&accountName=${accountName}` : ""}`;
+  const deeplink = `https://dl.vietqr.io/pay?bank=${bankBin}&acc=${accountNo}&amount=${amount}&desc=${safeAddInfo}${accountName ? `&name=${accountName}` : ""}`;
+
+  res.status(201).json({
+    success: true,
+    order: {
+      orderId,
+      transactionId,
+      totalAmount: amount,
+      status: "pending",
+      expiresAt: expiresAt.toISOString(),
+    },
+    payment: {
+      qrImageUrl,
+      deeplink,
+      bankInfo: { bankBin, accountNo, accountName },
+      description: safeAddInfo,
+    },
+  });
+};
+
+const getOrderById = async (req, res) => {
+  const { orderId } = req.params;
+  const order = await db.Order.findByPk(orderId);
+  if (!order)
+    return res
+      .status(404)
+      .json({ success: false, message: "Không tìm thấy đơn hàng" });
+
+  if (
+    order.status === "pending" &&
+    order.expiresAt &&
+    new Date(order.expiresAt) < new Date()
+  ) {
+    order.status = "cancelled";
+    await order.save();
+  }
+
+  const payment = await db.Payment.findOne({
+    where: { orderId },
+    order: [["createdAt", "DESC"]],
+  });
+  res.json({ success: true, order, payment });
+};
+
+const confirmPayment = async (req, res) => {
+  const { orderId } = req.params;
+  const order = await db.Order.findByPk(orderId);
+
+  if (!order || order.status !== "pending")
+    return res
+      .status(409)
+      .json({ success: false, message: "Đơn hàng không hợp lệ hoặc đã xử lý" });
+
+  order.status = "completed";
+  await order.save();
+  await db.Payment.update(
+    { status: "success", paidAt: new Date() },
+    { where: { orderId } },
+  );
+
+  res.json({ success: true, message: "Thanh toán thành công" });
+};
+
+export default { createOrder, getOrderById, confirmPayment };
