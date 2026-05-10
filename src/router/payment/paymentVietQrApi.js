@@ -9,7 +9,7 @@ router.get("/order/:orderId", asyncHandler(paymentController.getOrderById));
 router.post("/confirm/:orderId", asyncHandler(paymentController.confirmPayment));
 
 const ApiPaymentVietQr = (app) => {
-  return app.use("/api/payment", router);
+  return app.use("/api/payment/vietqr", router);
 };
 
 export default ApiPaymentVietQr;
