@@ -2,6 +2,8 @@ require("dotenv").config();
 import express from "express";
 import configCORS from "./config/cors";
 import cookieParser from "cookie-parser";
+import http from "http";
+import { initSocket } from "./socket.js";
 const path = require("path");
 
 // Routers
@@ -24,6 +26,8 @@ import ApiQrVietQr from "./router/payment/qrVietQrApi";
 // const corsMiddleware = require("./config/cors");
 
 const app = express();
+const server = http.createServer(app);
+const io = initSocket(server);
 
 configCORS(app);
 app.use(express.json());
@@ -51,6 +55,6 @@ ApiPaymentVietQr(app);
 ApiQrVietQr(app);
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });

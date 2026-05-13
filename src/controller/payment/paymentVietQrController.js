@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import db from "../../models/index.js";
+import { getIo } from "../../socket.js";
 
 const createOrder = async (req, res) => {
   const { totalAmount, description, bankBin, accountNo, accountName } =
@@ -101,7 +102,72 @@ const confirmPayment = async (req, res) => {
     { where: { orderId } },
   );
 
+  const io = getIo();
+  if (io) {
+    io.to(orderId).emit("payment-completed", {
+      success: true,
+      message: "Thanh toán VietQR đã được xác nhận",
+      orderId,
+    });
+  }
+
   res.json({ success: true, message: "Thanh toán thành công" });
 };
 
-export default { createOrder, getOrderById, confirmPayment };
+const handleWebhook = async (req, res) => {
+  const { orderId, status } = req.body;
+
+  if (!orderId || !status)
+    return res
+      .status(400)
+      .json({ success: false, message: "Payload webhook không hợp lệ" });
+
+  const order = await db.Order.findByPk(orderId);
+
+  if (!order)
+    return res
+      .status(404)
+      .json({ success: false, message: "Không tìm thấy đơn hàng" });
+
+  const normalizedStatus = String(status).toLowerCase();
+  const isPaid =
+    normalizedStatus === "paid" || normalizedStatus === "completed";
+  const newOrderStatus = isPaid
+    ? "completed"
+    : normalizedStatus === "failed"
+      ? "failed"
+      : "pending";
+
+  if (order.status === "completed") {
+    return res.json({
+      success: true,
+      message: "Đơn hàng đã được xử lý trước đó",
+    });
+  }
+
+  order.status = newOrderStatus;
+  await order.save();
+
+  await db.Payment.update(
+    {
+      status: isPaid ? "success" : newOrderStatus,
+      paidAt: isPaid ? new Date() : null,
+      responseMessage: `Webhook update: ${status}`,
+    },
+    { where: { orderId } },
+  );
+
+  const io = getIo();
+  if (io) {
+    io.to(orderId).emit("payment-completed", {
+      success: isPaid,
+      message: isPaid ? "Tiền đã về tài khoản." : "Thanh toán thất bại.",
+      status: newOrderStatus,
+      orderId,
+    });
+  }
+
+  res.json({ success: true, message: "Webhook processed successfully" });
+};
+
+export default { createOrder, getOrderById, confirmPayment, handleWebhook };
