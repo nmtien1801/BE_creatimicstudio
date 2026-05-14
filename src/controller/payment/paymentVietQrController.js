@@ -44,6 +44,11 @@ const createOrder = async (req, res) => {
   const qrImageUrl = `https://img.vietqr.io/image/${bankBin}-${accountNo}-compact2.png?amount=${amount}&addInfo=${safeAddInfo}${accountName ? `&accountName=${accountName}` : ""}`;
   const deeplink = `https://dl.vietqr.io/pay?bank=${bankBin}&acc=${accountNo}&amount=${amount}&desc=${safeAddInfo}${accountName ? `&name=${accountName}` : ""}`;
 
+  // CHỖ NHÚNG PAYOS:
+  // const paymentLinkRes = await payos.createPaymentLink(body);
+  // qrImageUrl = paymentLinkRes.qrCode;
+  // orderId = paymentLinkRes.orderCode;
+
   res.status(201).json({
     success: true,
     order: {
@@ -90,28 +95,47 @@ const confirmPayment = async (req, res) => {
   const { orderId } = req.params;
   const order = await db.Order.findByPk(orderId);
 
-  if (!order || order.status !== "pending")
+  if (!order)
     return res
-      .status(409)
-      .json({ success: false, message: "Đơn hàng không hợp lệ hoặc đã xử lý" });
+      .status(404)
+      .json({ success: false, message: "Không tìm thấy đơn hàng" });
 
-  order.status = "completed";
-  await order.save();
-  await db.Payment.update(
-    { status: "success", paidAt: new Date() },
-    { where: { orderId } },
-  );
+  if (
+    order.status === "pending" &&
+    order.expiresAt &&
+    new Date(order.expiresAt) < new Date()
+  ) {
+    order.status = "cancelled";
+    await order.save();
+  }
 
-  const io = getIo();
-  if (io) {
-    io.to(orderId).emit("payment-completed", {
+  if (order.status === "completed") {
+    return res.json({
       success: true,
-      message: "Thanh toán VietQR đã được xác nhận",
-      orderId,
+      message: "Đơn hàng đã được xác nhận qua Webhook.",
+      orderStatus: order.status,
+      order,
     });
   }
 
-  res.json({ success: true, message: "Thanh toán thành công" });
+  if (order.status === "failed" || order.status === "cancelled") {
+    return res.status(409).json({
+      success: false,
+      message: "Đơn hàng đã không thành công hoặc đã hết hạn.",
+      orderStatus: order.status,
+      order,
+    });
+  }
+
+  // Không cho phép client tự động hoàn tất giao dịch.
+  // Trạng thái completed chỉ được cập nhật khi webhook xác nhận tiền đã vào tài khoản.
+  return res.status(202).json({
+    success: false,
+    message:
+      "Hệ thống chưa nhận được tiền từ ngân hàng. Vui lòng đợi webhook xác nhận.",
+    orderStatus: order.status,
+    order,
+  });
 };
 
 const handleWebhook = async (req, res) => {
