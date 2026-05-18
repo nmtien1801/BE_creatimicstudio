@@ -1,27 +1,51 @@
 import { v4 as uuidv4 } from "uuid";
 import db from "../../models/index.js";
 import { getIo } from "../../socket.js";
+import PayOS from "@payos/node";
+
+// Khởi tạo PayOS client
+const payos = new PayOS(
+  process.env.PAYOS_CLIENT_ID,
+  process.env.PAYOS_API_KEY,
+  process.env.PAYOS_CHECKSUM_KEY,
+);
 
 const createOrder = async (req, res) => {
-  const { totalAmount, description, bankBin, accountNo, accountName } =
-    req.body;
+  const { totalAmount, description, items } = req.body;
 
   const amount = Number(totalAmount);
   if (!amount || amount <= 0)
     return res
       .status(400)
       .json({ success: false, message: "Số tiền không hợp lệ" });
-  if (!bankBin || !accountNo)
-    return res
-      .status(400)
-      .json({ success: false, message: "Thông tin ngân hàng là bắt buộc" });
 
   const safeAddInfo = String(description || `Thanh toan ${Date.now()}`)
     .replace(/[^a-zA-Z0-9 ]/g, "")
     .slice(0, 25);
-  const orderId = `VRQ-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+
+  // PayOS yêu cầu orderCode là số nguyên dương
+  const orderCode = Date.now(); // hoặc dùng nanoid số
+  const orderId = `POS-${orderCode}`;
   const transactionId = uuidv4();
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+  // Tạo payment link từ PayOS
+  const payosBody = {
+    orderCode,
+    amount,
+    description: safeAddInfo,
+    items: items?.map((i) => ({
+      name: i.name,
+      quantity: i.qty ?? i.quantity ?? 1,
+      price: i.price,
+    })) || [{ name: safeAddInfo, quantity: 1, price: amount }],
+    returnUrl: process.env.PAYOS_RETURN_URL,
+    cancelUrl: process.env.PAYOS_CANCEL_URL,
+    expiredAt: Math.floor(expiresAt.getTime() / 1000), // Unix timestamp
+  };
+
+  const paymentLinkRes = await payos.createPaymentLink(payosBody);
+  // paymentLinkRes = { checkoutUrl, qrCode, paymentLinkId, ... }
 
   // Lưu DB
   await db.Order.create({
@@ -41,14 +65,6 @@ const createOrder = async (req, res) => {
     amount,
   });
 
-  const qrImageUrl = `https://img.vietqr.io/image/${bankBin}-${accountNo}-compact2.png?amount=${amount}&addInfo=${safeAddInfo}${accountName ? `&accountName=${accountName}` : ""}`;
-  const deeplink = `https://dl.vietqr.io/pay?bank=${bankBin}&acc=${accountNo}&amount=${amount}&desc=${safeAddInfo}${accountName ? `&name=${accountName}` : ""}`;
-
-  // CHỖ NHÚNG PAYOS:
-  // const paymentLinkRes = await payos.createPaymentLink(body);
-  // qrImageUrl = paymentLinkRes.qrCode;
-  // orderId = paymentLinkRes.orderCode;
-
   res.status(201).json({
     success: true,
     order: {
@@ -59,9 +75,9 @@ const createOrder = async (req, res) => {
       expiresAt: expiresAt.toISOString(),
     },
     payment: {
-      qrImageUrl,
-      deeplink,
-      bankInfo: { bankBin, accountNo, accountName },
+      qrImageUrl: paymentLinkRes.qrCode, // ✅ QR dạng base64 hoặc URL
+      checkoutUrl: paymentLinkRes.checkoutUrl, // ✅ Link mở trang thanh toán PayOS
+      deeplink: paymentLinkRes.checkoutUrl, // Dùng lại deeplink slot cho frontend
       description: safeAddInfo,
     },
   });
@@ -139,44 +155,38 @@ const confirmPayment = async (req, res) => {
 };
 
 const handleWebhook = async (req, res) => {
-  const { orderId, status } = req.body;
-
-  if (!orderId || !status)
+  // ✅ Verify chữ ký PayOS
+  let webhookData;
+  try {
+    webhookData = payos.verifyPaymentWebhookData(req.body);
+  } catch (err) {
     return res
       .status(400)
-      .json({ success: false, message: "Payload webhook không hợp lệ" });
+      .json({ success: false, message: "Chữ ký webhook không hợp lệ" });
+  }
+
+  const { orderCode, code } = webhookData;
+  const orderId = `POS-${orderCode}`;
+  const isPaid = code === "00"; // PayOS: "00" = thành công
 
   const order = await db.Order.findByPk(orderId);
-
   if (!order)
     return res
       .status(404)
       .json({ success: false, message: "Không tìm thấy đơn hàng" });
 
-  const normalizedStatus = String(status).toLowerCase();
-  const isPaid =
-    normalizedStatus === "paid" || normalizedStatus === "completed";
-  const newOrderStatus = isPaid
-    ? "completed"
-    : normalizedStatus === "failed"
-      ? "failed"
-      : "pending";
+  if (order.status === "completed")
+    return res.json({ success: true, message: "Đã xử lý trước đó" });
 
-  if (order.status === "completed") {
-    return res.json({
-      success: true,
-      message: "Đơn hàng đã được xử lý trước đó",
-    });
-  }
-
+  const newOrderStatus = isPaid ? "completed" : "failed";
   order.status = newOrderStatus;
   await order.save();
 
   await db.Payment.update(
     {
-      status: isPaid ? "success" : newOrderStatus,
+      status: isPaid ? "success" : "failed",
       paidAt: isPaid ? new Date() : null,
-      responseMessage: `Webhook update: ${status}`,
+      responseMessage: `PayOS webhook: ${code}`,
     },
     { where: { orderId } },
   );
@@ -191,7 +201,7 @@ const handleWebhook = async (req, res) => {
     });
   }
 
-  res.json({ success: true, message: "Webhook processed successfully" });
+  res.json({ success: true });
 };
 
 export default { createOrder, getOrderById, confirmPayment, handleWebhook };
