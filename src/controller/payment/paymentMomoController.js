@@ -5,7 +5,7 @@ import { log } from "console";
 
 // MoMo Sandbox Configuration
 const MOMO_CONFIG = {
-  SANDBOX_URL: "https://test-payment.momo.vn/v2/gateway/api/create",
+  SANDBOX_URL: "https://payment.momo.vn/v2/gateway/api/create",
   PARTNER_CODE: process.env.PARTNER_CODE,
   ACCESS_KEY: process.env.ACCESS_KEY,
   SECRET_KEY: process.env.SECRET_KEY,

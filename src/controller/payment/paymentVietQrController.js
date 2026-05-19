@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import db from "../../models/index.js";
 import { getIo } from "../../socket.js";
-import PayOS from "@payos/node";
+import { PayOS } from "@payos/node";
 
 // Khởi tạo PayOS client
 const payos = new PayOS(
