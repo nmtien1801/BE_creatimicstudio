@@ -27,17 +27,7 @@ const generateMomoSignature = ({
   requestId,
   requestType,
 }) => {
-  const rawSignature =
-    `accessKey=${accessKey}` +
-    `&amount=${amount}` +
-    `&extraData=${extraData}` +
-    `&ipnUrl=${ipnUrl}` +
-    `&orderId=${orderId}` +
-    `&orderInfo=${orderInfo}` +
-    `&partnerCode=${partnerCode}` +
-    `&redirectUrl=${redirectUrl}` +
-    `&requestId=${requestId}` +
-    `&requestType=${requestType}`;
+  const rawSignature = `accessKey=${accessKey}&amount=${amount}&extraData=${extraData}&ipnUrl=${ipnUrl}&orderId=${orderId}&orderInfo=${orderInfo}&partnerCode=${partnerCode}&redirectUrl=${redirectUrl}&requestId=${requestId}&requestType=${requestType}`;
 
   return crypto
     .createHmac("sha256", MOMO_CONFIG.SECRET_KEY)
@@ -47,8 +37,7 @@ const generateMomoSignature = ({
 
 // Tạo QR Code MoMo
 export const createMomoQr = async (req, res) => {
-  try {
-    const {
+   const {
       userId,
       productId,
       productName,
@@ -77,7 +66,7 @@ export const createMomoQr = async (req, res) => {
       partnerCode: MOMO_CONFIG.PARTNER_CODE,
       accessKey: MOMO_CONFIG.ACCESS_KEY,
       requestId,
-      amount: String(Math.floor(amount)),
+      amount: Math.floor(Number(amount)),
       orderId,
       orderInfo: description || `Thanh toán cho ${productName}`,
       redirectUrl: MOMO_CONFIG.REDIRECT_URL,
@@ -86,7 +75,7 @@ export const createMomoQr = async (req, res) => {
       requestType: "captureWallet",
       lang: "vi",
     };
-    
+
     // Tạo signature theo đúng format MoMo
     momoRequest.signature = generateMomoSignature(momoRequest);
 
@@ -99,63 +88,65 @@ export const createMomoQr = async (req, res) => {
         timeout: 10000,
       },
     );
-console.log('sssssssssssssss ', momoResponse);
+    console.log("sssssssssssssss ", momoResponse);
+  // try {
+   
 
-    const momoData = momoResponse.data;
-    console.log("MoMo response:", JSON.stringify(momoData, null, 2));
+  //   const momoData = momoResponse.data;
+  //   console.log("MoMo response:", JSON.stringify(momoData, null, 2));
 
-    // MoMo từ chối → return luôn, KHÔNG lưu DB
-    if (momoData.resultCode !== 0) {
-      return res.status(400).json({
-        EC: 1,
-        EM: momoData.message || "MoMo từ chối giao dịch",
-        DT: null,
-      });
-    }
+  //   // MoMo từ chối → return luôn, KHÔNG lưu DB
+  //   if (momoData.resultCode !== 0) {
+  //     return res.status(400).json({
+  //       EC: 1,
+  //       EM: momoData.message || "MoMo từ chối giao dịch",
+  //       DT: null,
+  //     });
+  //   }
 
-    // ✅ Chỉ lưu DB khi MoMo chấp nhận
-    await db.Order.create({
-      orderId,
-      userId,
-      productId,
-      quantity,
-      amount,
-      status: "pending",
-      paymentMethod,
-      expiresAt: new Date(Date.now() + 15 * 60 * 1000),
-    });
+  //   // ✅ Chỉ lưu DB khi MoMo chấp nhận
+  //   await db.Order.create({
+  //     orderId,
+  //     userId,
+  //     productId,
+  //     quantity,
+  //     amount,
+  //     status: "pending",
+  //     paymentMethod,
+  //     expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+  //   });
 
-    await db.Payment.create({
-      orderId,
-      paymentMethod,
-      status: "pending",
-      amount,
-    });
+  //   await db.Payment.create({
+  //     orderId,
+  //     paymentMethod,
+  //     status: "pending",
+  //     amount,
+  //   });
 
-    return res.status(200).json({
-      EC: 0,
-      EM: "Tạo QR Code thành công",
-      DT: {
-        orderId,
-        qrCode: momoData.qrCodeUrl,
-        deeplink: momoData.deeplink,
-        payUrl: momoData.payUrl,
-        amount,
-        description: momoRequest.orderInfo,
-        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
-      },
-    });
-  } catch (error) {
-    console.error(
-      "Error creating MoMo QR:",
-      error?.response?.data || error.message,
-    );
-    res.status(500).json({
-      EC: 1,
-      EM: error?.response?.data?.message || "Lỗi khi tạo QR Code",
-      DT: null,
-    });
-  }
+  //   return res.status(200).json({
+  //     EC: 0,
+  //     EM: "Tạo QR Code thành công",
+  //     DT: {
+  //       orderId,
+  //       qrCode: momoData.qrCodeUrl,
+  //       deeplink: momoData.deeplink,
+  //       payUrl: momoData.payUrl,
+  //       amount,
+  //       description: momoRequest.orderInfo,
+  //       expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+  //     },
+  //   });
+  // } catch (error) {
+  //   console.error(
+  //     "Error creating MoMo QR:",
+  //     error?.response?.data || error.message,
+  //   );
+  //   res.status(500).json({
+  //     EC: 1,
+  //     EM: error?.response?.data?.message || "Lỗi khi tạo QR Code",
+  //     DT: null,
+  //   });
+  // }
 };
 
 // Kiểm tra trạng thái thanh toán

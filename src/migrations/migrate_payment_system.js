@@ -115,3 +115,5 @@ module.exports = {
     await queryInterface.dropTable("Order");
   },
 };
+
+// npx sequelize-cli db:migrate --to migrate_payment_system.js
