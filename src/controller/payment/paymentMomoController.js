@@ -9,8 +9,8 @@ const MOMO_CONFIG = {
   PARTNER_CODE: process.env.PARTNER_CODE,
   ACCESS_KEY: process.env.ACCESS_KEY,
   SECRET_KEY: process.env.SECRET_KEY,
-  REDIRECT_URL: `${process.env.REACT_URL || "http://localhost:5173"}/payment`,
-  NOTIFY_URL: `${process.env.BE_URL || "http://localhost:8080"}/api/payment/webhook`,
+  REDIRECT_URL: `${process.env.REACT_URL}/payment-momo`,
+  NOTIFY_URL: `${process.env.BE_URL}/api/payment/webhook`,
 };
 
 // Tạo signature cho MoMo request
@@ -86,7 +86,7 @@ export const createMomoQr = async (req, res) => {
       requestType: "captureWallet",
       lang: "vi",
     };
-
+    
     // Tạo signature theo đúng format MoMo
     momoRequest.signature = generateMomoSignature(momoRequest);
 
@@ -99,6 +99,7 @@ export const createMomoQr = async (req, res) => {
         timeout: 10000,
       },
     );
+console.log('sssssssssssssss ', momoResponse);
 
     const momoData = momoResponse.data;
     console.log("MoMo response:", JSON.stringify(momoData, null, 2));
