@@ -41,19 +41,22 @@ dbPool.query("SELECT NOW()", (err, res) => {
 // 1. ROUTE XỬ LÝ BOT PRERENDER (ĐẶT LÊN ĐẦU)
 // ==========================================
 
-// ĐÃ SỬA: Đọc ngược mảng để lấy chính xác ID ở cuối URL bất kể cấu hình Nginx thế nào
 const parseProductRequestUri = (originalUrl) => {
   const cleanPath = originalUrl.split("?")[0];
-  const segments = cleanPath.split("/").filter(Boolean);
+
+  // Bỏ prefix /bot-prerender khỏi URL thật để đưa về dạng path của người dùng
+  const realPath = cleanPath.replace(/^\/bot-prerender/, "") || "/";
+
+  const segments = realPath.split("/").filter(Boolean);
 
   const result = {
-    requestUri: cleanPath || "/",
+    requestUri: realPath,
     productSlug: "",
     id: "",
   };
 
   if (segments.length > 0) {
-    const lastSegment = segments[segments.length - 1]; // Nhặt phân đoạn cuối cùng (Ví dụ: "92")
+    const lastSegment = segments[segments.length - 1];
     const isNumeric = /^\d+$/.test(lastSegment);
 
     if (isNumeric) {
@@ -86,13 +89,14 @@ const getProductBySlug = async (slug) => {
 
   const isNumericId = /^\d+$/.test(normalizedSlug);
 
-  // ĐÃ SỬA: Phân tách rõ ràng luồng tìm kiếm để tối ưu tốc độ và tránh lỗi kiểu dữ liệu
+  // Luồng xử lý tìm kiếm bằng ID
   if (isNumericId) {
-    const numericId = parseInt(normalizedSlug, 10); // Ép hẳn về kiểu INT số nguyên
+    const numericId = parseInt(normalizedSlug, 10);
     console.log(
       `[BOT DEBUG] 🔎 Đang truy vấn bằng ID (Số nguyên): ${numericId}`,
     );
 
+    // ✅ ĐÃ KHỬ 'S': Đổi tên bảng thành "Product" theo đúng ý bạn
     const { rows } = await dbPool.query(
       `SELECT id, name AS title, description AS short_description, image AS thumbnail_url 
        FROM "Product" 
@@ -107,10 +111,12 @@ const getProductBySlug = async (slug) => {
     return rows[0] || null;
   }
 
-  // Luồng tìm kiếm fallback bằng chuỗi (slug hoặc maSP) nếu không tìm thấy ID số
+  // Luồng xử lý tìm kiếm bằng Chuỗi (slug/maSP)
   console.log(
     `[BOT DEBUG] 🔎 Đang truy vấn bằng Chuỗi (Slug/maSP): "${normalizedSlug}"`,
   );
+
+  // ✅ ĐÃ KHỬ 'S': Đổi tên bảng thành "Product" theo đúng ý bạn
   const { rows } = await dbPool.query(
     `SELECT id, name AS title, description AS short_description, image AS thumbnail_url 
      FROM "Product" 
@@ -161,7 +167,7 @@ const renderBotHtml = ({ title, description, imageUrl, url }) => {
   <body>
     <h1>${safeTitle}</h1>
     <p>${safeDescription}</p>
-  </body>
+  </head>
 </html>`;
 };
 
@@ -196,7 +202,8 @@ app.get("/bot-prerender/*path", async (req, res) => {
   const queryKey = id || productSlug;
 
   console.log("-----------------------------------------");
-  console.log(`[BOT INSPECT] URL nhận được: ${req.originalUrl}`);
+  console.log(`[BOT INSPECT] URL nhận được từ Nginx: ${req.originalUrl}`);
+  console.log(`[BOT INSPECT] Sau xử lý -> requestUri thực tế: "${requestUri}"`);
   console.log(
     `[BOT INSPECT] Bóc tách dữ liệu -> ID: "${id}", Slug: "${productSlug}"`,
   );
