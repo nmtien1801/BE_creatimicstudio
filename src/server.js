@@ -82,11 +82,11 @@ const getProductBySlug = async (slug) => {
   // Câu lệnh truy vấn SQL giữ nguyên cấu trúc của bạn
   const queryText = isNumericId
     ? `SELECT id, name AS title, description AS short_description, image AS thumbnail_url
-       FROM "Products"
+       FROM "Product"
        WHERE id = $1 OR "maSP" = $1 OR REPLACE(LOWER(unaccent(name)), ' ', '-') = $1
        LIMIT 1`
     : `SELECT id, name AS title, description AS short_description, image AS thumbnail_url
-       FROM "Products"
+       FROM "Product"
        WHERE "maSP" = $1 OR REPLACE(LOWER(unaccent(name)), ' ', '-') = $1
        LIMIT 1`;
 
