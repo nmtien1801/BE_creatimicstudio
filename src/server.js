@@ -79,7 +79,7 @@ const getProductBySlug = async (slug) => {
 
   const isNumericId = /^\d+$/.test(normalizedSlug);
 
-  // Chuẩn hóa REPLACE(LOWER(name)) để so khớp chính xác slug tiếng Việt có dấu
+  // Câu lệnh truy vấn SQL giữ nguyên cấu trúc của bạn
   const queryText = isNumericId
     ? `SELECT id, name AS title, description AS short_description, image AS thumbnail_url
        FROM "Products"
@@ -90,7 +90,23 @@ const getProductBySlug = async (slug) => {
        WHERE "maSP" = $1 OR REPLACE(LOWER(unaccent(name)), ' ', '-') = $1
        LIMIT 1`;
 
-  const { rows } = await dbPool.query(queryText, [normalizedSlug]);
+  // CHỐT HẠ: Nếu là ID số (như "92"), ép kiểu hẳn sang Integer để Postgres so khớp chính xác
+  const queryParam = isNumericId
+    ? parseInt(normalizedSlug, 10)
+    : normalizedSlug;
+
+  console.log(`[BOT DEBUG] Đang tìm kiếm sản phẩm với tham số:`, queryParam);
+
+  const { rows } = await dbPool.query(queryText, [queryParam]);
+
+  if (rows.length > 0) {
+    console.log(`[BOT DEBUG] 🎉 Tìm thấy sản phẩm thật:`, rows[0].title);
+  } else {
+    console.log(
+      `[BOT DEBUG] ❌ Không tìm thấy sản phẩm nào khớp với tham số trên trong DB.`,
+    );
+  }
+
   return rows[0] || null;
 };
 
