@@ -41,24 +41,31 @@ dbPool.query("SELECT NOW()", (err, res) => {
 // 1. ROUTE XỬ LÝ BOT PRERENDER (ĐẶT LÊN ĐẦU)
 // ==========================================
 
+// ĐÃ SỬA: Đọc ngược mảng để lấy chính xác ID ở cuối URL bất kể cấu hình Nginx thế nào
 const parseProductRequestUri = (originalUrl) => {
-  const rawPath =
-    originalUrl.split("?")[0].replace(/^\/bot-prerender/, "") || "/";
-  const normalizedPath = rawPath.replace(/\/+$/, "");
-  const segments = normalizedPath.split("/").filter(Boolean);
+  const cleanPath = originalUrl.split("?")[0];
+  const segments = cleanPath.split("/").filter(Boolean);
+
   const result = {
-    requestUri: normalizedPath || "/",
+    requestUri: cleanPath || "/",
     productSlug: "",
     id: "",
   };
 
-  // Nếu URL dạng /:productSlug/all/:id
-  if (segments.length >= 3 && segments[1] === "all") {
-    result.productSlug = segments[0];
-    result.id = segments[2];
-  } else if (segments.length >= 1) {
-    result.productSlug = segments[0];
-    result.id = segments[segments.length - 1];
+  if (segments.length > 0) {
+    const lastSegment = segments[segments.length - 1]; // Nhặt phân đoạn cuối cùng (Ví dụ: "92")
+    const isNumeric = /^\d+$/.test(lastSegment);
+
+    if (isNumeric) {
+      result.id = lastSegment;
+      if (segments.length >= 3 && segments[segments.length - 2] === "all") {
+        result.productSlug = segments[segments.length - 3];
+      } else {
+        result.productSlug = segments[segments.length - 2] || "";
+      }
+    } else {
+      result.productSlug = lastSegment;
+    }
   }
 
   return result;
@@ -79,34 +86,45 @@ const getProductBySlug = async (slug) => {
 
   const isNumericId = /^\d+$/.test(normalizedSlug);
 
-  // Câu lệnh truy vấn SQL giữ nguyên cấu trúc của bạn
-  const queryText = isNumericId
-    ? `SELECT id, name AS title, description AS short_description, image AS thumbnail_url
-       FROM "Product"
-       WHERE id = $1 OR "maSP" = $1 OR REPLACE(LOWER(unaccent(name)), ' ', '-') = $1
-       LIMIT 1`
-    : `SELECT id, name AS title, description AS short_description, image AS thumbnail_url
-       FROM "Product"
-       WHERE "maSP" = $1 OR REPLACE(LOWER(unaccent(name)), ' ', '-') = $1
-       LIMIT 1`;
-
-  // CHỐT HẠ: Nếu là ID số (như "92"), ép kiểu hẳn sang Integer để Postgres so khớp chính xác
-  const queryParam = isNumericId
-    ? parseInt(normalizedSlug, 10)
-    : normalizedSlug;
-
-  console.log(`[BOT DEBUG] Đang tìm kiếm sản phẩm với tham số:`, queryParam);
-
-  const { rows } = await dbPool.query(queryText, [queryParam]);
-
-  if (rows.length > 0) {
-    console.log(`[BOT DEBUG] 🎉 Tìm thấy sản phẩm thật:`, rows[0].title);
-  } else {
+  // ĐÃ SỬA: Phân tách rõ ràng luồng tìm kiếm để tối ưu tốc độ và tránh lỗi kiểu dữ liệu
+  if (isNumericId) {
+    const numericId = parseInt(normalizedSlug, 10); // Ép hẳn về kiểu INT số nguyên
     console.log(
-      `[BOT DEBUG] ❌ Không tìm thấy sản phẩm nào khớp với tham số trên trong DB.`,
+      `[BOT DEBUG] 🔎 Đang truy vấn bằng ID (Số nguyên): ${numericId}`,
     );
+
+    const { rows } = await dbPool.query(
+      `SELECT id, name AS title, description AS short_description, image AS thumbnail_url 
+       FROM "Product" 
+       WHERE id = $1 
+       LIMIT 1`,
+      [numericId],
+    );
+
+    if (rows.length > 0) {
+      console.log(`[BOT DEBUG] 🎉 Tìm thấy sản phẩm bằng ID:`, rows[0].title);
+    }
+    return rows[0] || null;
   }
 
+  // Luồng tìm kiếm fallback bằng chuỗi (slug hoặc maSP) nếu không tìm thấy ID số
+  console.log(
+    `[BOT DEBUG] 🔎 Đang truy vấn bằng Chuỗi (Slug/maSP): "${normalizedSlug}"`,
+  );
+  const { rows } = await dbPool.query(
+    `SELECT id, name AS title, description AS short_description, image AS thumbnail_url 
+     FROM "Product" 
+     WHERE "maSP" = $1 OR REPLACE(LOWER(unaccent(name)), ' ', '-') = $1 
+     LIMIT 1`,
+    [normalizedSlug],
+  );
+
+  if (rows.length > 0) {
+    console.log(
+      `[BOT DEBUG] 🎉 Tìm thấy sản phẩm bằng Slug/maSP:`,
+      rows[0].title,
+    );
+  }
   return rows[0] || null;
 };
 
@@ -177,6 +195,12 @@ app.get("/bot-prerender/*path", async (req, res) => {
   );
   const queryKey = id || productSlug;
 
+  console.log("-----------------------------------------");
+  console.log(`[BOT INSPECT] URL nhận được: ${req.originalUrl}`);
+  console.log(
+    `[BOT INSPECT] Bóc tách dữ liệu -> ID: "${id}", Slug: "${productSlug}"`,
+  );
+
   if (!queryKey) {
     return res.status(200).send(renderFallbackHtml());
   }
@@ -184,6 +208,9 @@ app.get("/bot-prerender/*path", async (req, res) => {
   try {
     const product = await getProductBySlug(queryKey);
     if (!product) {
+      console.log(
+        `[BOT INSPECT] ❌ Không tìm thấy sản phẩm trong DB, chạy về Fallback.`,
+      );
       return res.status(200).send(renderFallbackHtml());
     }
 
@@ -199,7 +226,7 @@ app.get("/bot-prerender/*path", async (req, res) => {
       }),
     );
   } catch (error) {
-    console.error("[BOT PRERENDER] Lỗi khi truy vấn sản phẩm:", error);
+    console.error("[BOT PRERENDER] Lỗi hệ thống khi truy vấn sản phẩm:", error);
     return res.status(200).send(renderFallbackHtml());
   }
 });
@@ -212,7 +239,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Đã sửa: Đồng bộ linh hoạt giữa biến môi trường UPLOAD_PATH (.env) và thư mục tương đối dự phòng
 app.use(
   "/api/upload",
   express.static(
