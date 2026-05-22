@@ -167,7 +167,7 @@ const renderBotHtml = ({ title, description, imageUrl, url }) => {
   <body>
     <h1>${safeTitle}</h1>
     <p>${safeDescription}</p>
-  </head>
+  </body>
 </html>`;
 };
 
