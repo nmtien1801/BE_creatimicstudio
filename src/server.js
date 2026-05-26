@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import http from "http";
 import dbPool from "./config/Pool.js";
 import { initSocket } from "./socket.js";
+import rawBodyMiddleware from "./middleware/rawBodyMiddleware.js";
 const path = require("path");
 
 // Routers
@@ -23,6 +24,7 @@ import ApiPaymentMomo from "./router/payment/paymentMomoApi";
 import ApiPaymentVietQr from "./router/payment/paymentVietQrApi";
 import ApiBanks from "./router/payment/banksApi";
 import ApiQrVietQr from "./router/payment/qrVietQrApi";
+import ApiPaymentSepay from "./router/payment/sepayWebhookApi";
 
 const app = express();
 const server = http.createServer(app);
@@ -242,6 +244,7 @@ app.get("/bot-prerender/*path", async (req, res) => {
 // 2. CÁC CẤU HÌNH MIDDLEWARE & FILE TĨNH THÔNG THƯỜNG
 // ==========================================
 configCORS(app);
+app.use(rawBodyMiddleware); // ✅ Capture raw body cho webhook signature
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -271,6 +274,7 @@ ApiPaymentMomo(app);
 ApiBanks(app);
 ApiPaymentVietQr(app);
 ApiQrVietQr(app);
+ApiPaymentSepay(app);
 
 // ==========================================
 // 4. KHỞI CHẠY SERVER
