@@ -272,6 +272,30 @@ ApiBanks(app);
 ApiPaymentVietQr(app);
 ApiQrVietQr(app);
 
+// Thêm route xử lý riêng cho Bot Prerender
+app.get("/bot-prerender*", (req, res) => {
+  // Trả về HTML tĩnh đơn giản cho Googlebot cào dữ liệu
+  const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="vi">
+        <head>
+            <meta charset="UTF-8">
+            <title>Creatimic Studio - Thiết bị & Phần mềm Thu âm Livestream</title>
+            <meta name="description" content="Creatimic Studio chuyên cung cấp giải pháp, phần mềm và thiết bị thu âm livestream chất lượng cao." />
+            <meta property="og:title" content="Creatimic Studio" />
+            <meta property="og:url" content="https://cmicstudio.vn" />
+        </head>
+        <body>
+            <h1>Creatimic Studio</h1>
+            <p>Chào mừng đến với Creatimic Studio. Chúng tôi cung cấp các sản phẩm và dịch vụ livestream chuyên nghiệp.</p>
+        </body>
+        </html>
+    `;
+
+  // Bắt buộc trả về HTTP Status 200
+  res.status(200).send(htmlContent);
+});
+
 // ==========================================
 // 4. KHỞI CHẠY SERVER
 // ==========================================
