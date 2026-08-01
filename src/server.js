@@ -145,7 +145,7 @@ const renderBotHtml = ({ title, description, imageUrl, url }) => {
   const safeTitle = escapeHtml(title) || "CMICSTUDIO";
   const safeDescription =
     escapeHtml(description) ||
-    "CMIC Studio - Sản phẩm chất lượng, thiết kế chuyên nghiệp.";
+    "CMIC Studio - Cung cấp thiết bị Livestream chất lượng cao.";
   const safeImage = escapeHtml(imageUrl) || "https://cmicstudio.vn/logo.png";
   const safeUrl = escapeHtml(url) || "https://cmicstudio.vn";
 
@@ -179,7 +179,7 @@ const renderFallbackHtml = () => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CMICSTUDIO</title>
     <meta property="og:title" content="CMICSTUDIO" />
-    <meta property="og:description" content="CMIC Studio - Trang chủ chính thức, thiết kế website, quảng cáo, marketing." />
+    <meta property="og:description" content="CMIC Studio - Trang chủ chính thức, cung cấp thiết bị Livestream chất lượng cao." />
     <meta property="og:image" content="https://cmicstudio.vn/logo.png" />
     <meta property="og:url" content="https://cmicstudio.vn" />
     <meta property="og:type" content="website" />
@@ -189,7 +189,7 @@ const renderFallbackHtml = () => {
   </head>
   <body>
     <h1>CMICSTUDIO</h1>
-    <p>Thiết kế website và giải pháp marketing cho doanh nghiệp.</p>
+    <p>Cung cấp thiết bị Livestream chất lượng cao.</p>
   </body>
 </html>`;
 };
