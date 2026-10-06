@@ -10,8 +10,12 @@ module.exports = (sequelize, DataTypes) => {
         as: "category", // Alias khi truy vấn
       });
       Product.hasMany(models.ProductImage, {
-        foreignKey: 'productId',
-        as: 'images'
+        foreignKey: "productId",
+        as: "images",
+      });
+      Product.hasMany(models.OrderItem, {
+        foreignKey: "productId",
+        as: "orderItems",
       });
     }
   }
@@ -32,7 +36,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       sequelize,
       modelName: "Product",
-    }
+    },
   );
   return Product;
 };

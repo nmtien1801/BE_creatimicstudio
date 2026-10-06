@@ -19,10 +19,7 @@ import ApiRecruitment from "./router/recruitmentApi";
 import ApiContact from "./router/contactApi";
 import ApiProductImage from "./router/productImageApi";
 import UserCutVideoRoutes from "./router/userCutVideoApi";
-import ApiPaymentMomo from "./router/payment/paymentMomoApi";
-import ApiPaymentVietQr from "./router/payment/paymentVietQrApi";
-import ApiBanks from "./router/payment/banksApi";
-import ApiQrVietQr from "./router/payment/qrVietQrApi";
+import ApiOrder from "./router/orderApi.js";
 import CartRoutes from "./router/cartApi";
 
 const app = express();
@@ -267,12 +264,9 @@ ApiPost(app);
 ApiRecruitment(app);
 ApiContact(app);
 ApiProductImage(app);
-UserCutVideoRoutes(app);
-ApiPaymentMomo(app);
-ApiBanks(app);
-ApiPaymentVietQr(app);
-ApiQrVietQr(app);
+ApiOrder(app);
 CartRoutes(app);
+UserCutVideoRoutes(app);
 
 // ==========================================
 // 4. KHỞI CHẠY SERVER
