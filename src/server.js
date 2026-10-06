@@ -23,6 +23,7 @@ import ApiPaymentMomo from "./router/payment/paymentMomoApi";
 import ApiPaymentVietQr from "./router/payment/paymentVietQrApi";
 import ApiBanks from "./router/payment/banksApi";
 import ApiQrVietQr from "./router/payment/qrVietQrApi";
+import CartRoutes from "./router/cartApi";
 
 const app = express();
 const server = http.createServer(app);
@@ -271,6 +272,7 @@ ApiPaymentMomo(app);
 ApiBanks(app);
 ApiPaymentVietQr(app);
 ApiQrVietQr(app);
+CartRoutes(app);
 
 // ==========================================
 // 4. KHỞI CHẠY SERVER
