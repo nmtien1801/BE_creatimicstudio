@@ -222,8 +222,57 @@ const getOrderHistoryService = async (userId) => {
   }
 };
 
+const getAllOrdersService = async () => {
+  return getOrderHistoryService(null);
+};
+
+const updateOrderStatusService = async (orderId, status) => {
+  const allowedStatuses = ["pending", "completed", "cancelled"];
+
+  if (!orderId || !allowedStatuses.includes(status)) {
+    return {
+      EM: "Trạng thái đơn hàng không hợp lệ!",
+      EC: 1,
+      DT: null,
+    };
+  }
+
+  try {
+    const order = await Order.findByPk(orderId);
+
+    if (!order) {
+      return {
+        EM: "Không tìm thấy đơn hàng!",
+        EC: 2,
+        DT: null,
+      };
+    }
+
+    await order.update({ status });
+
+    return {
+      EM: "Cập nhật trạng thái đơn hàng thành công!",
+      EC: 0,
+      DT: {
+        orderId: order.orderId,
+        status: order.status,
+        updatedAt: order.updatedAt,
+      },
+    };
+  } catch (error) {
+    console.error("Lỗi cập nhật trạng thái đơn hàng:", error);
+    return {
+      EM: "Lỗi máy chủ khi cập nhật trạng thái đơn hàng!",
+      EC: -1,
+      DT: null,
+    };
+  }
+};
+
 module.exports = {
   createOrderService,
   getOrderDetailService,
   getOrderHistoryService,
+  getAllOrdersService,
+  updateOrderStatusService,
 };
