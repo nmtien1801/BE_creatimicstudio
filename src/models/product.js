@@ -17,6 +17,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "productId",
         as: "orderItems",
       });
+      Product.hasMany(models.Review, {
+        foreignKey: "productId",
+        as: "reviews",
+      });
     }
   }
   Product.init(
@@ -27,6 +31,11 @@ module.exports = (sequelize, DataTypes) => {
       detail: DataTypes.TEXT,
       price: DataTypes.FLOAT,
       status: DataTypes.BOOLEAN,
+      sold: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
       isTopSeller: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,

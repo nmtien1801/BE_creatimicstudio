@@ -8,7 +8,14 @@ const createOrderService = async (data, userId) => {
   try {
     const { fullName, phone, address, notes, paymentMethod, items } = data;
 
-    if (!fullName || !phone || !address || !items || !items.length) {
+    if (
+      !fullName ||
+      !phone ||
+      !address ||
+      !Array.isArray(items) ||
+      items.length === 0 ||
+      items.some((item) => !item || typeof item !== "object")
+    ) {
       await t.rollback();
       return {
         EM: "Vui lòng cung cấp đầy đủ thông tin nhận hàng và sản phẩm!",
@@ -17,8 +24,29 @@ const createOrderService = async (data, userId) => {
       };
     }
 
+    const normalizedItems = items.map((item) => ({
+      productId: Number(item.productId || item.id),
+      quantity: item.quantity == null ? 1 : Number(item.quantity),
+    }));
+    if (
+      normalizedItems.some(
+        (item) =>
+          !Number.isInteger(item.productId) ||
+          item.productId < 1 ||
+          !Number.isInteger(item.quantity) ||
+          item.quantity < 1,
+      )
+    ) {
+      await t.rollback();
+      return {
+        EM: "Mã sản phẩm hoặc số lượng không hợp lệ!",
+        EC: 1,
+        DT: null,
+      };
+    }
+
     // Lấy danh sách ID các sản phẩm khách đặt
-    const productIds = items.map((i) => i.productId || i.id);
+    const productIds = [...new Set(normalizedItems.map((item) => item.productId))];
 
     // Truy vấn giá sản phẩm trực tiếp từ DB để đảm bảo tính an toàn
     const dbProducts = await Product.findAll({
@@ -26,7 +54,7 @@ const createOrderService = async (data, userId) => {
       transaction: t,
     });
 
-    if (!dbProducts || dbProducts.length === 0) {
+    if (!dbProducts || dbProducts.length !== productIds.length) {
       await t.rollback();
       return {
         EM: "Không tìm thấy thông tin sản phẩm trong hệ thống!",
@@ -41,12 +69,11 @@ const createOrderService = async (data, userId) => {
     const orderItemsData = [];
 
     // Tính toán tổng tiền và chuẩn bị danh sách món cho OrderItem
-    for (const item of items) {
-      const pId = item.productId || item.id;
-      const matchedProduct = dbProducts.find((p) => p.id === Number(pId));
+    for (const item of normalizedItems) {
+      const matchedProduct = dbProducts.find((p) => p.id === item.productId);
 
       if (matchedProduct) {
-        const itemQuantity = Number(item.quantity) || 1;
+        const itemQuantity = item.quantity;
         const itemPrice = Number(matchedProduct.price) || 0;
 
         totalAmount += itemPrice * itemQuantity;
@@ -238,27 +265,61 @@ const updateOrderStatusService = async (orderId, status) => {
   }
 
   try {
-    const order = await Order.findByPk(orderId);
+    return await sequelize.transaction(async (transaction) => {
+      const order = await Order.findByPk(orderId, {
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      });
 
-    if (!order) {
+      if (!order) {
+        return {
+          EM: "Không tìm thấy đơn hàng!",
+          EC: 2,
+          DT: null,
+        };
+      }
+
+      if (status === "completed" && !order.salesCountApplied) {
+        const items = await OrderItem.findAll({
+          where: { orderId },
+          attributes: ["productId", "quantity"],
+          transaction,
+        });
+        const quantityByProduct = new Map();
+
+        for (const item of items) {
+          quantityByProduct.set(
+            item.productId,
+            (quantityByProduct.get(item.productId) || 0) + item.quantity,
+          );
+        }
+
+        for (const [productId, quantity] of quantityByProduct) {
+          await Product.increment("sold", {
+            by: quantity,
+            where: { id: productId },
+            transaction,
+          });
+        }
+
+        order.salesCountApplied = true;
+      }
+
+      await order.update(
+        { status, salesCountApplied: order.salesCountApplied },
+        { transaction },
+      );
+
       return {
-        EM: "Không tìm thấy đơn hàng!",
-        EC: 2,
-        DT: null,
+        EM: "Cập nhật trạng thái đơn hàng thành công!",
+        EC: 0,
+        DT: {
+          orderId: order.orderId,
+          status: order.status,
+          updatedAt: order.updatedAt,
+        },
       };
-    }
-
-    await order.update({ status });
-
-    return {
-      EM: "Cập nhật trạng thái đơn hàng thành công!",
-      EC: 0,
-      DT: {
-        orderId: order.orderId,
-        status: order.status,
-        updatedAt: order.updatedAt,
-      },
-    };
+    });
   } catch (error) {
     console.error("Lỗi cập nhật trạng thái đơn hàng:", error);
     return {

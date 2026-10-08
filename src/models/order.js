@@ -27,6 +27,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ENUM("pending", "completed", "cancelled"),
         defaultValue: "pending",
       },
+      salesCountApplied: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
       expiresAt: DataTypes.DATE,
     },
     {
