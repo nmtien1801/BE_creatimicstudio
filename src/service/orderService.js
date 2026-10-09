@@ -279,7 +279,8 @@ const updateOrderStatusService = async (orderId, status) => {
         };
       }
 
-      if (status === "completed" && !order.salesCountApplied) {
+      const salesCountShouldBeApplied = status === "completed";
+      if (salesCountShouldBeApplied !== order.salesCountApplied) {
         const items = await OrderItem.findAll({
           where: { orderId },
           attributes: ["productId", "quantity"],
@@ -295,14 +296,22 @@ const updateOrderStatusService = async (orderId, status) => {
         }
 
         for (const [productId, quantity] of quantityByProduct) {
-          await Product.increment("sold", {
-            by: quantity,
-            where: { id: productId },
-            transaction,
-          });
+          if (salesCountShouldBeApplied) {
+            await Product.increment("sold", {
+              by: quantity,
+              where: { id: productId },
+              transaction,
+            });
+          } else {
+            await Product.decrement("sold", {
+              by: quantity,
+              where: { id: productId },
+              transaction,
+            });
+          }
         }
 
-        order.salesCountApplied = true;
+        order.salesCountApplied = salesCountShouldBeApplied;
       }
 
       await order.update(

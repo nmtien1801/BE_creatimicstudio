@@ -2,35 +2,45 @@ import contactService from "../service/contactService.js";
 
 const handleSendContact = async (req, res) => {
   try {
-    const { name, email, message } = req.body;
+    const { name, phone, email, message } =
+      req.body;
 
-    if (!name || !email || !message) {
+    // Validate các trường bắt buộc
+    if (!email) {
       return res.status(400).json({
-        EM: "Thiếu thông tin bắt buộc",
+        EM: "Vui lòng nhập đầy đủ các thông tin bắt buộc!",
         EC: 1,
         DT: "",
       });
     }
 
-    const result = await contactService.sendContactEmail(name, email, message);
+    // Truyền toàn bộ object hoặc từng tham số vào service xử lý
+    const contactData = {
+      name,
+      phone: phone || "",
+      email,
+      message
+    };
+
+    const result = await contactService.sendContactEmail(contactData);
 
     if (result.success) {
       return res.status(200).json({
-        EM: "Gửi email thành công",
+        EM: "Gửi thông tin liên hệ thành công!",
         EC: 0,
-        DT: result,
+        DT: result.data || result,
       });
     } else {
       return res.status(500).json({
-        EM: "Lỗi gửi email",
+        EM: "Lỗi gửi thông tin liên hệ",
         EC: -1,
-        DT: result.error,
+        DT: result.error || "",
       });
     }
   } catch (error) {
     console.error("Error in handleSendContact:", error);
     return res.status(500).json({
-      EM: "Error from server",
+      EM: "Lỗi hệ thống từ server (Error from server)",
       EC: -1,
       DT: "",
     });
@@ -50,7 +60,12 @@ const handleApplyContact = async (req, res) => {
       });
     }
 
-    const result = await contactService.sendApplyEmail(name, email, phone, file);
+    const result = await contactService.sendApplyEmail(
+      name,
+      email,
+      phone,
+      file,
+    );
 
     if (result.success) {
       return res.status(200).json({
