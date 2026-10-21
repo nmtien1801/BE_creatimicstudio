@@ -12,7 +12,7 @@ const handleLogin = async (req, res) => {
     let data = await authService.handleLogin(req.body);
 
     if (data.EC !== 0) {
-      return res.status(200).json({
+      return res.status(400).json({
         EM: data.EM,
         EC: data.EC,
         DT: data.DT,

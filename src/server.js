@@ -21,7 +21,6 @@ import ApiProductImage from "./router/productImageApi";
 import UserCutVideoRoutes from "./router/userCutVideoApi";
 import ApiOrder from "./router/orderApi.js";
 import CartRoutes from "./router/cartApi";
-import OtpRoutes from "./router/otpApi.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -267,7 +266,6 @@ ApiContact(app);
 ApiProductImage(app);
 ApiOrder(app);
 CartRoutes(app);
-OtpRoutes(app);
 UserCutVideoRoutes(app);
 
 // ==========================================

@@ -62,8 +62,6 @@ const nonSecurePaths = [
   /^\/upload\/.*/,
   /^\/user-cut-video\/login$/,
   /^\/order\/create/,
-  /^\/otp\/send/,
-  /^\/otp\/verify/,
 ];
 
 // lấy token từ header Authorization: Bearer <token>

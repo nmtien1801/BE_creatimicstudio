@@ -6,7 +6,7 @@ const handleSendContact = async (req, res) => {
       req.body;
 
     // Validate các trường bắt buộc
-    if (!email) {
+    if (!phone) {
       return res.status(400).json({
         EM: "Vui lòng nhập đầy đủ các thông tin bắt buộc!",
         EC: 1,
