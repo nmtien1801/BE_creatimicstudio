@@ -1,30 +1,25 @@
 import contactService from "../service/contactService.js";
+import larkService from "../service/larkService.js";
 
 const handleSendContact = async (req, res) => {
   try {
-    const { name, phone, email, message } =
-      req.body;
+    const { name, phone, email, message } = req.body;
 
-    // Validate các trường bắt buộc
-    if (!phone) {
-      return res.status(400).json({
-        EM: "Vui lòng nhập đầy đủ các thông tin bắt buộc!",
-        EC: 1,
-        DT: "",
-      });
-    }
-
-    // Truyền toàn bộ object hoặc từng tham số vào service xử lý
     const contactData = {
       name,
       phone: phone || "",
       email,
-      message
+      message,
     };
 
     const result = await contactService.sendContactEmail(contactData);
 
     if (result.success) {
+      // Gửi thông báo Lark (không chặn luồng chính nếu lỗi)
+      larkService.sendContactNotification(contactData).then((r) => {
+        if (!r.success) console.error("Lark notify failed:", r.error);
+      });
+
       return res.status(200).json({
         EM: "Gửi thông tin liên hệ thành công!",
         EC: 0,

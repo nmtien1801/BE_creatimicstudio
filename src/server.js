@@ -21,6 +21,7 @@ import ApiProductImage from "./router/productImageApi";
 import UserCutVideoRoutes from "./router/userCutVideoApi";
 import ApiOrder from "./router/orderApi.js";
 import CartRoutes from "./router/cartApi";
+import LarkApi from "./router/larkApi.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -267,6 +268,7 @@ ApiProductImage(app);
 ApiOrder(app);
 CartRoutes(app);
 UserCutVideoRoutes(app);
+LarkApi(app);
 
 // ==========================================
 // 4. KHỞI CHẠY SERVER
