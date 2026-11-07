@@ -3,9 +3,7 @@ const orderService = require("../service/orderService");
 const handleCreateOrder = async (req, res) => {
   try {
     // userId có thể lấy từ middleware xác thực jwt (req.user?.id) hoặc req.body
-    const userId = +req.headers["userid"] || req.get("userid") || null;
-    console.log("sssssss ", req.headers);
-    console.log("sssssss ", userId);
+    const userId = req.body.userId || null;
 
     const response = await orderService.createOrderService(req.body, userId);
     return res.status(200).json(response);
