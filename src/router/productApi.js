@@ -15,6 +15,7 @@ const ApiProduct = (app) => {
   router.use(checkUserJwt);
 
   router.get("/reviews/admin", reviewController.getReviewsForAdmin);
+  router.delete("/reviews/admin/:id", reviewController.deleteReview);
   router.get(
     "/product/:productId/review-eligibility",
     reviewController.getReviewEligibility,

@@ -108,6 +108,26 @@ const getReviewsForAdmin = async (page = 1, limit = 20, productId) => {
   }
 };
 
+const deleteReview = async (reviewId) => {
+  const id = Number(reviewId);
+  if (!Number.isInteger(id) || id < 1) {
+    return { EM: "Mã đánh giá không hợp lệ!", EC: 1, DT: null };
+  }
+
+  try {
+    const review = await db.Review.findByPk(id);
+    if (!review) {
+      return { EM: "Không tìm thấy đánh giá!", EC: 2, DT: null };
+    }
+
+    await review.destroy();
+    return { EM: "Xóa đánh giá thành công!", EC: 0, DT: null };
+  } catch (error) {
+    console.error("Lỗi xóa đánh giá:", error);
+    return { EM: "Lỗi máy chủ khi xóa đánh giá!", EC: -1, DT: null };
+  }
+};
+
 const getReviewEligibility = async (productId, userId) => {
   try {
     const id = Number(productId);
@@ -137,6 +157,7 @@ const createOrUpdateReview = async (productId, userId, data = {}) => {
   const id = Number(productId);
   const rating = Number(data.rating);
   const comment = typeof data.comment === "string" ? data.comment.trim() : "";
+  const images = data.images === undefined ? [] : data.images;
 
   if (
     !Number.isInteger(id) ||
@@ -146,10 +167,13 @@ const createOrUpdateReview = async (productId, userId, data = {}) => {
     rating < 1 ||
     rating > 5 ||
     !comment ||
-    comment.length > 2000
+    comment.length > 2000 ||
+    !Array.isArray(images) ||
+    images.length > 5 ||
+    images.some((image) => typeof image !== "string" || !image.trim() || image.length > 500)
   ) {
     return {
-      EM: "Vui lòng chọn số sao từ 1 đến 5 và nhập nhận xét tối đa 2000 ký tự!",
+      EM: "Vui lòng chọn số sao từ 1 đến 5, nhập nhận xét tối đa 2000 ký tự và chọn tối đa 5 ảnh hợp lệ!",
       EC: 1,
       DT: null,
     };
@@ -159,12 +183,12 @@ const createOrUpdateReview = async (productId, userId, data = {}) => {
     return await db.sequelize.transaction(async (transaction) => {
       const [review, created] = await db.Review.findOrCreate({
         where: { productId: id, userId },
-        defaults: { productId: id, userId, rating, comment },
+        defaults: { productId: id, userId, rating, comment, images },
         transaction,
       });
 
       if (!created) {
-        await review.update({ rating, comment }, { transaction });
+        await review.update({ rating, comment, images }, { transaction });
       }
 
       const savedReview = await db.Review.findByPk(review.id, {
@@ -193,6 +217,7 @@ const createOrUpdateReview = async (productId, userId, data = {}) => {
 export default {
   getProductReviews,
   getReviewsForAdmin,
+  deleteReview,
   getReviewEligibility,
   createOrUpdateReview,
 };

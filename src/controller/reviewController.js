@@ -12,20 +12,19 @@ const getProductReviews = async (req, res) => {
 };
 
 const getReviewsForAdmin = async (req, res) => {
-  if (req.user?.role !== "admin") {
-    return res.status(403).json({
-      EM: "Bạn không có quyền truy cập danh sách đánh giá!",
-      EC: -1,
-      DT: null,
-    });
-  }
-
   const response = await reviewService.getReviewsForAdmin(
     req.query.page,
     req.query.limit,
     req.query.productId,
   );
   const statusCode = response.EC === 0 ? 200 : response.EC === 1 ? 400 : 500;
+  return res.status(statusCode).json(response);
+};
+
+const deleteReview = async (req, res) => {
+  const response = await reviewService.deleteReview(req.params.id);
+  const statusCode =
+    response.EC === 0 ? 200 : response.EC === 2 ? 404 : response.EC === 1 ? 400 : 500;
   return res.status(statusCode).json(response);
 };
 
@@ -66,6 +65,7 @@ const createOrUpdateReview = async (req, res) => {
 export default {
   getProductReviews,
   getReviewsForAdmin,
+  deleteReview,
   getReviewEligibility,
   createOrUpdateReview,
 };
