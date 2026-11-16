@@ -14,6 +14,7 @@ const ApiProduct = (app) => {
   // middleware
   router.use(checkUserJwt);
 
+  router.get("/reviews/admin", reviewController.getReviewsForAdmin);
   router.get(
     "/product/:productId/review-eligibility",
     reviewController.getReviewEligibility,

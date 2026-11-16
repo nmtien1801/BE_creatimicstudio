@@ -11,6 +11,24 @@ const getProductReviews = async (req, res) => {
   return res.status(statusCode).json(response);
 };
 
+const getReviewsForAdmin = async (req, res) => {
+  if (req.user?.role !== "admin") {
+    return res.status(403).json({
+      EM: "Bạn không có quyền truy cập danh sách đánh giá!",
+      EC: -1,
+      DT: null,
+    });
+  }
+
+  const response = await reviewService.getReviewsForAdmin(
+    req.query.page,
+    req.query.limit,
+    req.query.productId,
+  );
+  const statusCode = response.EC === 0 ? 200 : response.EC === 1 ? 400 : 500;
+  return res.status(statusCode).json(response);
+};
+
 const getReviewEligibility = async (req, res) => {
   if (!req.user?.id) {
     return res.status(401).json({
@@ -41,13 +59,13 @@ const createOrUpdateReview = async (req, res) => {
     req.user.id,
     req.body,
   );
-  const statusCode =
-    response.EC === 0 ? 200 : response.EC === 3 || response.EC === 1 ? 400 : 500;
+  const statusCode = response.EC === 0 ? 200 : response.EC === 1 ? 400 : 500;
   return res.status(statusCode).json(response);
 };
 
 export default {
   getProductReviews,
+  getReviewsForAdmin,
   getReviewEligibility,
   createOrUpdateReview,
 };

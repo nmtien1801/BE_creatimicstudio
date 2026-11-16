@@ -62,6 +62,52 @@ const getProductReviews = async (productId, page = 1, limit = 20) => {
   }
 };
 
+const getReviewsForAdmin = async (page = 1, limit = 20, productId) => {
+  try {
+    const where = {};
+    if (productId !== undefined && productId !== "") {
+      const id = Number(productId);
+      if (!Number.isInteger(id) || id < 1) {
+        return { EM: "Mã sản phẩm không hợp lệ!", EC: 1, DT: null };
+      }
+      where.productId = id;
+    }
+
+    const currentPage = Math.max(1, Number(page) || 1);
+    const pageSize = Math.min(50, Math.max(1, Number(limit) || 20));
+    const [reviews, total] = await Promise.all([
+      db.Review.findAll({
+        where,
+        include: [
+          {
+            model: db.User,
+            as: "user",
+            attributes: ["id", "userName", "image"],
+          },
+          {
+            model: db.Product,
+            as: "product",
+            attributes: ["id", "name"],
+          },
+        ],
+        order: [["createdAt", "DESC"]],
+        limit: pageSize,
+        offset: (currentPage - 1) * pageSize,
+      }),
+      db.Review.count({ where }),
+    ]);
+
+    return {
+      EM: "Lấy danh sách đánh giá thành công!",
+      EC: 0,
+      DT: { reviews, page: currentPage, limit: pageSize, total },
+    };
+  } catch (error) {
+    console.error("Lỗi lấy danh sách đánh giá quản trị:", error);
+    return { EM: "Lỗi máy chủ khi lấy danh sách đánh giá!", EC: -1, DT: null };
+  }
+};
+
 const getReviewEligibility = async (productId, userId) => {
   try {
     const id = Number(productId);
@@ -69,19 +115,6 @@ const getReviewEligibility = async (productId, userId) => {
       return { EM: "Thông tin khách hàng hoặc sản phẩm không hợp lệ!", EC: 1, DT: null };
     }
 
-    const completedOrderItem = await db.OrderItem.findOne({
-      where: { productId: id },
-      attributes: ["id"],
-      include: [
-        {
-          model: db.Order,
-          as: "order",
-          attributes: ["orderId"],
-          where: { userId, status: "completed" },
-          required: true,
-        },
-      ],
-    });
     const review = await db.Review.findOne({
       where: { productId: id, userId },
     });
@@ -90,7 +123,7 @@ const getReviewEligibility = async (productId, userId) => {
       EM: "Kiểm tra điều kiện đánh giá thành công!",
       EC: 0,
       DT: {
-        canReview: Boolean(completedOrderItem),
+        canReview: true,
         review,
       },
     };
@@ -124,29 +157,6 @@ const createOrUpdateReview = async (productId, userId, data = {}) => {
 
   try {
     return await db.sequelize.transaction(async (transaction) => {
-      const completedOrderItem = await db.OrderItem.findOne({
-        where: { productId: id },
-        attributes: ["id"],
-        include: [
-          {
-            model: db.Order,
-            as: "order",
-            attributes: ["orderId"],
-            where: { userId, status: "completed" },
-            required: true,
-          },
-        ],
-        transaction,
-      });
-
-      if (!completedOrderItem) {
-        return {
-          EM: "Bạn chỉ có thể đánh giá sản phẩm trong đơn hàng đã hoàn tất!",
-          EC: 3,
-          DT: null,
-        };
-      }
-
       const [review, created] = await db.Review.findOrCreate({
         where: { productId: id, userId },
         defaults: { productId: id, userId, rating, comment },
@@ -182,6 +192,7 @@ const createOrUpdateReview = async (productId, userId, data = {}) => {
 
 export default {
   getProductReviews,
+  getReviewsForAdmin,
   getReviewEligibility,
   createOrUpdateReview,
 };
