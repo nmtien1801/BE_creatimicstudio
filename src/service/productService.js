@@ -1,6 +1,31 @@
 import db from "../models/index.js";
 import { Op, fn, col, where } from "sequelize";
 
+const normalizeAccessoryProductIds = (ids, productId) => {
+  if (ids === undefined) return [];
+  if (!Array.isArray(ids)) return null;
+
+  const normalizedIds = ids.map(Number);
+  if (
+    normalizedIds.some(
+      (id) => !Number.isInteger(id) || id < 1 || id === Number(productId),
+    )
+  ) {
+    return null;
+  }
+
+  return [...new Set(normalizedIds)];
+};
+
+const accessoryProductsExist = async (ids) => {
+  if (ids.length === 0) return true;
+  const products = await db.Product.findAll({
+    where: { id: ids },
+    attributes: ["id"],
+  });
+  return products.length === ids.length;
+};
+
 const getListProduct = async (query = {}) => {
   try {
     const page = parseInt(query.page) || 1;
@@ -51,7 +76,15 @@ const getListProduct = async (query = {}) => {
 
 const getProductById = async (id) => {
   try {
-    const product = await db.Product.findByPk(id);
+    const product = await db.Product.findByPk(id, {
+      include: [
+        {
+          model: db.Product,
+          as: "accessoryProducts",
+          through: { attributes: [] },
+        },
+      ],
+    });
     if (!product) return { EM: "Product not found", EC: 1, DT: "" };
     return { EM: "Get product success", EC: 0, DT: product };
   } catch (error) {
@@ -62,6 +95,20 @@ const getProductById = async (id) => {
 
 const createProduct = async (rawData) => {
   try {
+    const accessoryProductIds = normalizeAccessoryProductIds(
+      rawData.accessoryProductIds,
+    );
+    if (
+      !accessoryProductIds ||
+      !(await accessoryProductsExist(accessoryProductIds))
+    ) {
+      return {
+        EM: "Danh sách sản phẩm phụ không hợp lệ!",
+        EC: 1,
+        DT: "",
+      };
+    }
+
     const newProduct = await db.Product.create({
       name: rawData.name || "",
       image: rawData.image || "",
@@ -73,6 +120,7 @@ const createProduct = async (rawData) => {
       maSP: rawData.maSP || "",
     });
 
+    await newProduct.setAccessoryProducts(accessoryProductIds);
     return { EM: "Create product success", EC: 0, DT: newProduct };
   } catch (error) {
     console.error(">>> Error createProduct:", error);
@@ -84,6 +132,25 @@ const updateProduct = async (id, rawData) => {
   try {
     const product = await db.Product.findByPk(id);
     if (!product) return { EM: "Product not found", EC: 1, DT: "" };
+
+    if (rawData.accessoryProductIds !== undefined) {
+      const accessoryProductIds = normalizeAccessoryProductIds(
+        rawData.accessoryProductIds,
+        product.id,
+      );
+      if (
+        !accessoryProductIds ||
+        !(await accessoryProductsExist(accessoryProductIds))
+      ) {
+        return {
+          EM: "Danh sách sản phẩm phụ không hợp lệ!",
+          EC: 1,
+          DT: "",
+        };
+      }
+
+      await product.setAccessoryProducts(accessoryProductIds);
+    }
 
     const updates = {
       name: rawData.name ?? product.name,
